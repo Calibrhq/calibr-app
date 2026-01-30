@@ -30,16 +30,27 @@ module calibr::calibr {
     /// Reputation score scale (0-1000 represents 0.0-1.0)
     const REPUTATION_SCALE: u64 = 1000;
     
-    // Reputation tier thresholds
-    const TIER_NOVICE_MAX: u64 = 500;
-    const TIER_CALIBRATED_MAX: u64 = 750;
-    const TIER_EXPERT_MAX: u64 = 900;
+    // ============================================================
+    // REPUTATION TIER THRESHOLDS (Model 2)
+    // ============================================================
+    // 
+    // Calibr uses exactly 3 tiers as specified in the documentation:
+    // - New: score < 700 → max 70% confidence
+    // - Proven: 700 ≤ score ≤ 850 → max 80% confidence
+    // - Elite: score > 850 → max 90% confidence
+    //
+    // These thresholds are carefully chosen:
+    // 1. 700 is the starting point - new users begin at the "New/Proven" boundary
+    // 2. Reaching "Proven" (80%) requires consistent calibration above 700
+    // 3. Reaching "Elite" (90%) requires exceptional, sustained performance (>850)
+    //
+    const TIER_NEW_MAX: u64 = 699;      // Below 700 = New tier
+    const TIER_PROVEN_MAX: u64 = 850;   // 700-850 = Proven tier, >850 = Elite tier
     
-    // Confidence caps per tier
-    const CAP_NOVICE: u64 = 70;
-    const CAP_CALIBRATED: u64 = 80;
-    const CAP_EXPERT: u64 = 85;
-    const CAP_ORACLE: u64 = 90;
+    // Confidence caps per tier (these are HARD LIMITS)
+    const CAP_NEW: u64 = 70;            // New users: max 70%
+    const CAP_PROVEN: u64 = 80;         // Proven users: max 80%
+    const CAP_ELITE: u64 = 90;          // Elite users: max 90%
 
     // ============================================================
     // ERRORS
@@ -113,10 +124,9 @@ module calibr::calibr {
         
         /// Maximum confidence this user can select (50-90)
         /// Determined by reputation tier:
-        /// - Novice (0-500): max 70%
-        /// - Calibrated (500-750): max 80%
-        /// - Expert (750-900): max 85%
-        /// - Oracle (900+): max 90%
+        /// - New (score < 700): max 70%
+        /// - Proven (700 ≤ score ≤ 850): max 80%
+        /// - Elite (score > 850): max 90%
         max_confidence: u64,
     }
 
@@ -225,20 +235,27 @@ module calibr::calibr {
     // HELPER FUNCTIONS
     // ============================================================
     
-    /// Calculate max confidence cap based on reputation score
-    /// - Novice (0-500): max 70%
-    /// - Calibrated (500-750): max 80%
-    /// - Expert (750-900): max 85%
-    /// - Oracle (900+): max 90%
+    /// Calculate max confidence cap based on reputation score.
+    /// 
+    /// Tier system (from Calibr documentation):
+    /// - New: score < 700 → max 70%
+    /// - Proven: 700 ≤ score ≤ 850 → max 80%
+    /// - Elite: score > 850 → max 90%
+    /// 
+    /// This function enforces the core protection mechanism:
+    /// - New users CANNOT bet above 70% regardless of how "sure" they are
+    /// - Users must PROVE calibration over time to unlock higher caps
+    /// - Elite status (90% access) requires sustained excellent performance
     public fun calculate_max_confidence(reputation_score: u64): u64 {
-        if (reputation_score >= TIER_EXPERT_MAX) {
-            CAP_ORACLE
-        } else if (reputation_score >= TIER_CALIBRATED_MAX) {
-            CAP_EXPERT
-        } else if (reputation_score >= TIER_NOVICE_MAX) {
-            CAP_CALIBRATED
+        if (reputation_score > TIER_PROVEN_MAX) {
+            // Elite tier: score > 850
+            CAP_ELITE
+        } else if (reputation_score > TIER_NEW_MAX) {
+            // Proven tier: 700 ≤ score ≤ 850
+            CAP_PROVEN
         } else {
-            CAP_NOVICE
+            // New tier: score < 700
+            CAP_NEW
         }
     }
 
@@ -249,13 +266,15 @@ module calibr::calibr {
     public fun fixed_stake(): u64 { FIXED_STAKE }
     public fun default_max_confidence(): u64 { DEFAULT_MAX_CONFIDENCE }
     public fun reputation_scale(): u64 { REPUTATION_SCALE }
-    public fun tier_novice_max(): u64 { TIER_NOVICE_MAX }
-    public fun tier_calibrated_max(): u64 { TIER_CALIBRATED_MAX }
-    public fun tier_expert_max(): u64 { TIER_EXPERT_MAX }
-    public fun cap_novice(): u64 { CAP_NOVICE }
-    public fun cap_calibrated(): u64 { CAP_CALIBRATED }
-    public fun cap_expert(): u64 { CAP_EXPERT }
-    public fun cap_oracle(): u64 { CAP_ORACLE }
+    
+    // Tier threshold getters (3-tier system)
+    public fun tier_new_max(): u64 { TIER_NEW_MAX }
+    public fun tier_proven_max(): u64 { TIER_PROVEN_MAX }
+    
+    // Confidence cap getters (3-tier system)
+    public fun cap_new(): u64 { CAP_NEW }
+    public fun cap_proven(): u64 { CAP_PROVEN }
+    public fun cap_elite(): u64 { CAP_ELITE }
     
     // ============================================================
     // CONSTRUCTOR FUNCTIONS

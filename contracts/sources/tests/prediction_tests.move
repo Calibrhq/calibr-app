@@ -356,9 +356,10 @@ module calibr::prediction_tests {
             
             // Reputation should be updated
             // skill(70, true) = 1 - (0.7 - 1)² = 1 - 0.09 = 0.91 = 910
-            // new_score = (700 + 910) / 2 = 805
+            // Rolling average formula: new_rep = (old_rep × n + skill) / (n + 1)
+            // First prediction (n=0): new_rep = (700 × 0 + 910) / 1 = 910
             let new_score = calibr::get_reputation_score(&profile);
-            assert!(new_score == 805, 3);
+            assert!(new_score == 910, 3);
             assert!(calibr::get_reputation_count(&profile) == 1, 4);
             
             ts::return_to_sender(&scenario, profile);
@@ -427,9 +428,10 @@ module calibr::prediction_tests {
             
             // Reputation should decrease
             // skill(70, false) = 1 - (0.7 - 0)² = 1 - 0.49 = 0.51 = 510
-            // new_score = (700 + 510) / 2 = 605
+            // Rolling average formula: new_rep = (old_rep × n + skill) / (n + 1)
+            // First prediction (n=0): new_rep = (700 × 0 + 510) / 1 = 510
             let new_score = calibr::get_reputation_score(&profile);
-            assert!(new_score == 605, 0);
+            assert!(new_score == 510, 0);
             
             ts::return_to_sender(&scenario, profile);
             ts::return_to_sender(&scenario, prediction);
@@ -451,9 +453,10 @@ module calibr::prediction_tests {
             
             // Reputation should increase
             // skill(60, true) = 1 - (0.6 - 1)² = 1 - 0.16 = 0.84 = 840
-            // new_score = (700 + 840) / 2 = 770
+            // Rolling average formula: new_rep = (old_rep × n + skill) / (n + 1)
+            // First prediction (n=0): new_rep = (700 × 0 + 840) / 1 = 840
             let new_score = calibr::get_reputation_score(&profile);
-            assert!(new_score == 770, 1);
+            assert!(new_score == 840, 1);
             
             ts::return_to_sender(&scenario, profile);
             ts::return_to_sender(&scenario, prediction);

@@ -107,6 +107,7 @@ module calibr::prediction {
     use std::option;
     use calibr::calibr::{Self, UserProfile, Market, Prediction};
     use calibr::math;
+    use calibr::reputation;
 
     // ============================================================
     // ERRORS
@@ -440,39 +441,29 @@ module calibr::prediction {
         // STEP 4: UPDATE REPUTATION (Model 2)
         // ============================================================
         // 
-        // skill = 1 - (c - o)² where:
-        // - c = confidence as decimal [0.5, 0.9]
-        // - o = 1 if correct, 0 if wrong
+        // This delegates to reputation::update_reputation_internal which:
         // 
-        // This rewards CALIBRATION, not just being right:
-        // - High confidence + correct = high skill
-        // - High confidence + wrong = low skill
-        // - Low confidence + either = medium skill
-        
-        let skill_score = math::skill(confidence, won);
-        
-        // Update reputation as rolling average
-        let old_score = calibr::get_reputation_score(profile);
-        let old_count = calibr::get_reputation_count(profile);
-        
-        // Rolling average formula (starting rep counts as sample 0)
-        let new_score = if (old_count == 0) {
-            // First prediction: blend starting reputation with skill
-            (700 + skill_score) / 2  // 700 = STARTING_REPUTATION
-        } else {
-            let effective_count = old_count + 1;
-            let weighted_old = old_score * effective_count;
-            let total = weighted_old + skill_score;
-            total / (effective_count + 1)
-        };
-        
-        // Update profile
-        calibr::set_reputation_score(profile, new_score);
-        calibr::increment_reputation_count(profile);
-        
-        // Recalculate max confidence based on new reputation tier
-        let new_max_confidence = calibr::calculate_max_confidence(new_score);
-        calibr::set_max_confidence(profile, new_max_confidence);
+        // 1. Computes skill: skill = 1 - (c - o)²
+        //    - c = confidence as decimal [0.5, 0.9]
+        //    - o = 1 if correct, 0 if wrong
+        // 
+        // 2. Updates rolling average: new_rep = (old_rep × n + skill) / (n + 1)
+        //    - n = current reputation_count
+        //    - Each prediction has equal weight in the long-term average
+        // 
+        // 3. Increments reputation_count
+        // 
+        // 4. Recalculates max_confidence based on tier:
+        //    - <700 → 70% (New)
+        //    - 700-850 → 80% (Proven)
+        //    - >850 → 90% (Elite)
+        // 
+        // WHY CALIBRATION BEATS AGGRESSION:
+        // - Aggressive (spam 90%): expected skill ≈ 0.59
+        // - Calibrated (honest 60%): expected skill ≈ 0.74
+        // - The skill formula quadratically punishes overconfidence
+        // 
+        reputation::update_reputation_internal(profile, confidence, won);
         
         // ============================================================
         // STEP 5: MARK PREDICTION AS SETTLED
