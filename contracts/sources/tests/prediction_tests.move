@@ -376,7 +376,7 @@ module calibr::prediction_tests {
         create_user_profile(&mut scenario, ALICE);
         create_user_profile(&mut scenario, BOB);
         
-        // Alice predicts YES at 70%
+        // Alice predicts YES at 70% (risk = 50)
         ts::next_tx(&mut scenario, ALICE);
         {
             let profile = ts::take_from_sender<UserProfile>(&scenario);
@@ -387,7 +387,7 @@ module calibr::prediction_tests {
             ts::return_shared(market);
         };
         
-        // Bob predicts NO at 60%
+        // Bob predicts NO at 60% (risk = 25)
         ts::next_tx(&mut scenario, BOB);
         {
             let profile = ts::take_from_sender<UserProfile>(&scenario);
@@ -398,7 +398,7 @@ module calibr::prediction_tests {
             ts::return_shared(market);
         };
         
-        // Lock and resolve market as NO (Alice loses)
+        // Lock and resolve market as NO (Alice loses, Bob wins)
         ts::next_tx(&mut scenario, ADMIN);
         {
             let admin_cap = ts::take_from_sender<AdminCap>(&scenario);
@@ -410,13 +410,18 @@ module calibr::prediction_tests {
             ts::return_to_sender(&scenario, admin_cap);
         };
         
-        // Alice settles - she lost
+        // Alice settles - she LOST
+        // Alice at 70%: risk = 50
+        // Loser payout = stake - risk = 100 - 50 = 50
         ts::next_tx(&mut scenario, ALICE);
         {
             let mut profile = ts::take_from_sender<UserProfile>(&scenario);
             let mut prediction = ts::take_from_sender<Prediction>(&scenario);
             let market = ts::take_shared<Market>(&scenario);
             let ctx = ts::ctx(&mut scenario);
+            
+            // Verify prediction state before settlement
+            assert!(calibr::get_prediction_risked(&prediction) == 50, 10);
             
             prediction::settle_prediction(&mut profile, &mut prediction, &market, ctx);
             
@@ -425,6 +430,30 @@ module calibr::prediction_tests {
             // new_score = (700 + 510) / 2 = 605
             let new_score = calibr::get_reputation_score(&profile);
             assert!(new_score == 605, 0);
+            
+            ts::return_to_sender(&scenario, profile);
+            ts::return_to_sender(&scenario, prediction);
+            ts::return_shared(market);
+        };
+        
+        // Bob settles - he WON
+        // Bob at 60%: risk = 25
+        // Loser pool = yes_risk_total = 50 (Alice's risk)
+        // Winner payout = 100 + (25/25) * 50 = 150
+        ts::next_tx(&mut scenario, BOB);
+        {
+            let mut profile = ts::take_from_sender<UserProfile>(&scenario);
+            let mut prediction = ts::take_from_sender<Prediction>(&scenario);
+            let market = ts::take_shared<Market>(&scenario);
+            let ctx = ts::ctx(&mut scenario);
+            
+            prediction::settle_prediction(&mut profile, &mut prediction, &market, ctx);
+            
+            // Reputation should increase
+            // skill(60, true) = 1 - (0.6 - 1)² = 1 - 0.16 = 0.84 = 840
+            // new_score = (700 + 840) / 2 = 770
+            let new_score = calibr::get_reputation_score(&profile);
+            assert!(new_score == 770, 1);
             
             ts::return_to_sender(&scenario, profile);
             ts::return_to_sender(&scenario, prediction);
@@ -498,7 +527,7 @@ module calibr::prediction_tests {
     // ============================================================
 
     #[test]
-    fun test_payout_calculation() {
+    fun test_payout_calculation_winner() {
         let mut scenario = setup_test();
         create_market(&mut scenario, b"Test market");
         create_user_profile(&mut scenario, ALICE);
@@ -533,15 +562,36 @@ module calibr::prediction_tests {
             let market = ts::take_shared<Market>(&scenario);
             
             // If YES wins:
-            // - Loser pool = no_count * 100 = 1 * 100 = 100
+            // - Loser pool = no_risk_total = 25 (Bob's R)
             // - Total winner risk = yes_risk_total = 50
-            // - Alice's payout = 100 + (50/50) * 100 = 100 + 100 = 200
+            // - Alice's payout = 100 + (50/50) * 25 = 100 + 25 = 125
             let payout_if_yes = prediction::calculate_potential_payout(&prediction, &market, true);
-            assert!(payout_if_yes == 200, 0);
+            assert!(payout_if_yes == 125, 0);
             
-            // If NO wins, Alice loses
+            // If NO wins, Alice loses, keeps stake - risk = 100 - 50 = 50
             let payout_if_no = prediction::calculate_potential_payout(&prediction, &market, false);
-            assert!(payout_if_no == 0, 1);
+            assert!(payout_if_no == 50, 1);
+            
+            ts::return_to_sender(&scenario, prediction);
+            ts::return_shared(market);
+        };
+        
+        // Check Bob's payouts
+        ts::next_tx(&mut scenario, BOB);
+        {
+            let prediction = ts::take_from_sender<Prediction>(&scenario);
+            let market = ts::take_shared<Market>(&scenario);
+            
+            // If NO wins:
+            // - Loser pool = yes_risk_total = 50 (Alice's R)
+            // - Total winner risk = no_risk_total = 25
+            // - Bob's payout = 100 + (25/25) * 50 = 100 + 50 = 150
+            let payout_if_no = prediction::calculate_potential_payout(&prediction, &market, false);
+            assert!(payout_if_no == 150, 2);
+            
+            // If YES wins, Bob loses, keeps stake - risk = 100 - 25 = 75
+            let payout_if_yes = prediction::calculate_potential_payout(&prediction, &market, true);
+            assert!(payout_if_yes == 75, 3);
             
             ts::return_to_sender(&scenario, prediction);
             ts::return_shared(market);
@@ -579,13 +629,13 @@ module calibr::prediction_tests {
             ts::return_shared(market);
         };
         
-        // Manually add a NO prediction for testing (simulate third user)
+        // Manually add NO predictions (simulate other users)
+        // 2 NO predictions with risk 40 each
         ts::next_tx(&mut scenario, ADMIN);
         {
             let mut market = ts::take_shared<Market>(&scenario);
-            // Add 2 NO predictions with total risk 40
-            calibr::add_no_prediction(&mut market, 20);
-            calibr::add_no_prediction(&mut market, 20);
+            calibr::add_no_prediction(&mut market, 40);
+            calibr::add_no_prediction(&mut market, 40);
             ts::return_shared(market);
         };
         
@@ -596,12 +646,12 @@ module calibr::prediction_tests {
             let market = ts::take_shared<Market>(&scenario);
             
             // If YES wins:
-            // - Loser pool = no_count * 100 = 2 * 100 = 200
+            // - Loser pool = no_risk_total = 40 + 40 = 80
             // - Total winner risk = yes_risk_total = 50 + 25 = 75
-            // - Alice's share = (50/75) * 200 = 133 (integer division)
-            // - Alice's payout = 100 + 133 = 233
+            // - Alice's share = (50/75) * 80 = 53 (integer division)
+            // - Alice's payout = 100 + 53 = 153
             let payout = prediction::calculate_potential_payout(&prediction, &market, true);
-            assert!(payout == 233, 0);
+            assert!(payout == 153, 0);
             
             ts::return_to_sender(&scenario, prediction);
             ts::return_shared(market);
@@ -613,12 +663,216 @@ module calibr::prediction_tests {
             let prediction = ts::take_from_sender<Prediction>(&scenario);
             let market = ts::take_shared<Market>(&scenario);
             
-            // Bob's share = (25/75) * 200 = 66 (integer division)
-            // Bob's payout = 100 + 66 = 166
+            // Bob's share = (25/75) * 80 = 26 (integer division)
+            // Bob's payout = 100 + 26 = 126
             let payout = prediction::calculate_potential_payout(&prediction, &market, true);
-            assert!(payout == 166, 0);
+            assert!(payout == 126, 0);
             
             ts::return_to_sender(&scenario, prediction);
+            ts::return_shared(market);
+        };
+        
+        ts::end(scenario);
+    }
+    
+    #[test]
+    fun test_loser_payout_varies_by_confidence() {
+        let mut scenario = setup_test();
+        create_market(&mut scenario, b"Test market");
+        create_user_profile(&mut scenario, ALICE);
+        create_user_profile(&mut scenario, BOB);
+        
+        // Alice: YES at 50% (risk = 5, minimal)
+        ts::next_tx(&mut scenario, ALICE);
+        {
+            let profile = ts::take_from_sender<UserProfile>(&scenario);
+            let mut market = ts::take_shared<Market>(&scenario);
+            let ctx = ts::ctx(&mut scenario);
+            prediction::place_prediction(&profile, &mut market, true, 50, ctx);
+            ts::return_to_sender(&scenario, profile);
+            ts::return_shared(market);
+        };
+        
+        // Bob: YES at 70% (risk = 50)
+        ts::next_tx(&mut scenario, BOB);
+        {
+            let profile = ts::take_from_sender<UserProfile>(&scenario);
+            let mut market = ts::take_shared<Market>(&scenario);
+            let ctx = ts::ctx(&mut scenario);
+            prediction::place_prediction(&profile, &mut market, true, 70, ctx);
+            ts::return_to_sender(&scenario, profile);
+            ts::return_shared(market);
+        };
+        
+        // Check Alice's loser payout (if NO wins)
+        ts::next_tx(&mut scenario, ALICE);
+        {
+            let prediction = ts::take_from_sender<Prediction>(&scenario);
+            let market = ts::take_shared<Market>(&scenario);
+            
+            // Alice at 50%: risk = 5
+            // If NO wins: Alice keeps 100 - 5 = 95
+            let payout_if_no = prediction::calculate_potential_payout(&prediction, &market, false);
+            assert!(payout_if_no == 95, 0);
+            
+            ts::return_to_sender(&scenario, prediction);
+            ts::return_shared(market);
+        };
+        
+        // Check Bob's loser payout (if NO wins)
+        ts::next_tx(&mut scenario, BOB);
+        {
+            let prediction = ts::take_from_sender<Prediction>(&scenario);
+            let market = ts::take_shared<Market>(&scenario);
+            
+            // Bob at 70%: risk = 50
+            // If NO wins: Bob keeps 100 - 50 = 50
+            let payout_if_no = prediction::calculate_potential_payout(&prediction, &market, false);
+            assert!(payout_if_no == 50, 0);
+            
+            ts::return_to_sender(&scenario, prediction);
+            ts::return_shared(market);
+        };
+        
+        ts::end(scenario);
+    }
+
+    // ============================================================
+    // ZERO-SUM VERIFICATION TESTS
+    // ============================================================
+
+    #[test]
+    fun test_zero_sum_property() {
+        let mut scenario = setup_test();
+        create_market(&mut scenario, b"Test market");
+        create_user_profile(&mut scenario, ALICE);
+        create_user_profile(&mut scenario, BOB);
+        
+        // Alice: YES at 70% (risk = 50, stake = 100)
+        ts::next_tx(&mut scenario, ALICE);
+        {
+            let profile = ts::take_from_sender<UserProfile>(&scenario);
+            let mut market = ts::take_shared<Market>(&scenario);
+            let ctx = ts::ctx(&mut scenario);
+            prediction::place_prediction(&profile, &mut market, true, 70, ctx);
+            ts::return_to_sender(&scenario, profile);
+            ts::return_shared(market);
+        };
+        
+        // Bob: NO at 60% (risk = 25, stake = 100)
+        ts::next_tx(&mut scenario, BOB);
+        {
+            let profile = ts::take_from_sender<UserProfile>(&scenario);
+            let mut market = ts::take_shared<Market>(&scenario);
+            let ctx = ts::ctx(&mut scenario);
+            prediction::place_prediction(&profile, &mut market, false, 60, ctx);
+            ts::return_to_sender(&scenario, profile);
+            ts::return_shared(market);
+        };
+        
+        // Total stakes = 2 * 100 = 200
+        
+        // Check payouts if YES wins
+        ts::next_tx(&mut scenario, ALICE);
+        {
+            let alice_pred = ts::take_from_sender<Prediction>(&scenario);
+            let market = ts::take_shared<Market>(&scenario);
+            
+            // Alice wins: 100 + (50/50) * 25 = 125
+            let alice_payout_yes = prediction::calculate_potential_payout(&alice_pred, &market, true);
+            assert!(alice_payout_yes == 125, 0);
+            
+            ts::return_to_sender(&scenario, alice_pred);
+            ts::return_shared(market);
+        };
+        
+        ts::next_tx(&mut scenario, BOB);
+        {
+            let bob_pred = ts::take_from_sender<Prediction>(&scenario);
+            let market = ts::take_shared<Market>(&scenario);
+            
+            // Bob loses: 100 - 25 = 75
+            let bob_payout_yes = prediction::calculate_potential_payout(&bob_pred, &market, true);
+            assert!(bob_payout_yes == 75, 1);
+            
+            // Zero-sum: 125 + 75 = 200 = total stakes ✓
+            
+            ts::return_to_sender(&scenario, bob_pred);
+            ts::return_shared(market);
+        };
+        
+        // Check payouts if NO wins
+        ts::next_tx(&mut scenario, ALICE);
+        {
+            let alice_pred = ts::take_from_sender<Prediction>(&scenario);
+            let market = ts::take_shared<Market>(&scenario);
+            
+            // Alice loses: 100 - 50 = 50
+            let alice_payout_no = prediction::calculate_potential_payout(&alice_pred, &market, false);
+            assert!(alice_payout_no == 50, 2);
+            
+            ts::return_to_sender(&scenario, alice_pred);
+            ts::return_shared(market);
+        };
+        
+        ts::next_tx(&mut scenario, BOB);
+        {
+            let bob_pred = ts::take_from_sender<Prediction>(&scenario);
+            let market = ts::take_shared<Market>(&scenario);
+            
+            // Bob wins: 100 + (25/25) * 50 = 150
+            let bob_payout_no = prediction::calculate_potential_payout(&bob_pred, &market, false);
+            assert!(bob_payout_no == 150, 3);
+            
+            // Zero-sum: 50 + 150 = 200 = total stakes ✓
+            
+            ts::return_to_sender(&scenario, bob_pred);
+            ts::return_shared(market);
+        };
+        
+        ts::end(scenario);
+    }
+
+    #[test]
+    fun test_no_losers_everyone_gets_stake_back() {
+        let mut scenario = setup_test();
+        create_market(&mut scenario, b"Test market");
+        create_user_profile(&mut scenario, ALICE);
+        create_user_profile(&mut scenario, BOB);
+        
+        // Both predict YES
+        ts::next_tx(&mut scenario, ALICE);
+        {
+            let profile = ts::take_from_sender<UserProfile>(&scenario);
+            let mut market = ts::take_shared<Market>(&scenario);
+            let ctx = ts::ctx(&mut scenario);
+            prediction::place_prediction(&profile, &mut market, true, 70, ctx);
+            ts::return_to_sender(&scenario, profile);
+            ts::return_shared(market);
+        };
+        
+        ts::next_tx(&mut scenario, BOB);
+        {
+            let profile = ts::take_from_sender<UserProfile>(&scenario);
+            let mut market = ts::take_shared<Market>(&scenario);
+            let ctx = ts::ctx(&mut scenario);
+            prediction::place_prediction(&profile, &mut market, true, 60, ctx);
+            ts::return_to_sender(&scenario, profile);
+            ts::return_shared(market);
+        };
+        
+        // Check payouts if YES wins (no losers!)
+        ts::next_tx(&mut scenario, ALICE);
+        {
+            let pred = ts::take_from_sender<Prediction>(&scenario);
+            let market = ts::take_shared<Market>(&scenario);
+            
+            // No losers means loser_pool = 0
+            // Everyone just gets their stake back
+            let payout = prediction::calculate_potential_payout(&pred, &market, true);
+            assert!(payout == 100, 0);  // Just stake, no winnings
+            
+            ts::return_to_sender(&scenario, pred);
             ts::return_shared(market);
         };
         

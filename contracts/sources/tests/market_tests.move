@@ -364,21 +364,123 @@ module calibr::market_tests {
             let mut market = ts::take_shared<Market>(&scenario);
             
             // Simulate 3 YES predictions and 2 NO predictions
+            // YES: risk 50, 75, 100 (total = 225)
+            // NO: risk 25, 50 (total = 75)
             calibr::add_yes_prediction(&mut market, 50);
             calibr::add_yes_prediction(&mut market, 75);
             calibr::add_yes_prediction(&mut market, 100);
             calibr::add_no_prediction(&mut market, 25);
             calibr::add_no_prediction(&mut market, 50);
             
-            // If YES wins, loser pool = no_count * 100 = 2 * 100 = 200
-            assert!(market::calculate_loser_pool(&market, true) == 200, 0);
+            // CRITICAL: loser_pool = sum of loser R VALUES, not count * stake!
             
-            // If NO wins, loser pool = yes_count * 100 = 3 * 100 = 300
-            assert!(market::calculate_loser_pool(&market, false) == 300, 1);
+            // If YES wins: loser_pool = no_risk_total = 75
+            assert!(market::calculate_loser_pool(&market, true) == 75, 0);
+            
+            // If NO wins: loser_pool = yes_risk_total = 225
+            assert!(market::calculate_loser_pool(&market, false) == 225, 1);
             
             // Winner risk totals
             assert!(market::calculate_winner_risk_total(&market, true) == 225, 2); // 50+75+100
             assert!(market::calculate_winner_risk_total(&market, false) == 75, 3); // 25+50
+            
+            ts::return_shared(market);
+        };
+        
+        ts::end(scenario);
+    }
+
+    #[test]
+    fun test_calculate_winner_payout() {
+        let mut scenario = setup_test();
+        
+        ts::next_tx(&mut scenario, ADMIN);
+        {
+            let admin_cap = ts::take_from_sender<AdminCap>(&scenario);
+            let ctx = ts::ctx(&mut scenario);
+            market::create_market(&admin_cap, b"Test", ADMIN, ctx);
+            ts::return_to_sender(&scenario, admin_cap);
+        };
+        
+        ts::next_tx(&mut scenario, ADMIN);
+        {
+            let mut market = ts::take_shared<Market>(&scenario);
+            
+            // Alice: YES at 70% (risk = 50)
+            // Bob: NO at 90% (risk = 100)
+            calibr::add_yes_prediction(&mut market, 50);
+            calibr::add_no_prediction(&mut market, 100);
+            
+            // If YES wins:
+            // - loser_pool = 100 (Bob's risk)
+            // - winner_risk = 50 (Alice's risk)
+            // - Alice's payout = 100 + (50/50) * 100 = 200
+            let alice_payout = market::calculate_winner_payout(50, true, &market);
+            assert!(alice_payout == 200, 0);
+            
+            // If NO wins:
+            // - loser_pool = 50 (Alice's risk)
+            // - winner_risk = 100 (Bob's risk)
+            // - Bob's payout = 100 + (100/100) * 50 = 150
+            let bob_payout = market::calculate_winner_payout(100, false, &market);
+            assert!(bob_payout == 150, 1);
+            
+            ts::return_shared(market);
+        };
+        
+        ts::end(scenario);
+    }
+
+    #[test]
+    fun test_calculate_loser_payout() {
+        // Loser payout = stake - risk
+        
+        // At 50% confidence: R = 5, payout = 100 - 5 = 95
+        assert!(market::calculate_loser_payout(5) == 95, 0);
+        
+        // At 60% confidence: R = 25, payout = 100 - 25 = 75
+        assert!(market::calculate_loser_payout(25) == 75, 1);
+        
+        // At 70% confidence: R = 50, payout = 100 - 50 = 50
+        assert!(market::calculate_loser_payout(50) == 50, 2);
+        
+        // At 80% confidence: R = 75, payout = 100 - 75 = 25
+        assert!(market::calculate_loser_payout(75) == 25, 3);
+        
+        // At 90% confidence: R = 100, payout = 100 - 100 = 0
+        assert!(market::calculate_loser_payout(100) == 0, 4);
+    }
+
+    #[test]
+    fun test_zero_sum_verification() {
+        let mut scenario = setup_test();
+        
+        ts::next_tx(&mut scenario, ADMIN);
+        {
+            let admin_cap = ts::take_from_sender<AdminCap>(&scenario);
+            let ctx = ts::ctx(&mut scenario);
+            market::create_market(&admin_cap, b"Test", ADMIN, ctx);
+            ts::return_to_sender(&scenario, admin_cap);
+        };
+        
+        ts::next_tx(&mut scenario, ADMIN);
+        {
+            let mut market = ts::take_shared<Market>(&scenario);
+            
+            // Add predictions:
+            // Alice: YES at 70% (R = 50)
+            // Bob: NO at 60% (R = 25)
+            calibr::add_yes_prediction(&mut market, 50);
+            calibr::add_no_prediction(&mut market, 25);
+            
+            // Total stakes = 2 * 100 = 200
+            assert!(market::get_total_stakes(&market) == 200, 0);
+            
+            // Verify zero-sum for YES wins
+            assert!(market::verify_zero_sum(&market, true), 1);
+            
+            // Verify zero-sum for NO wins
+            assert!(market::verify_zero_sum(&market, false), 2);
             
             ts::return_shared(market);
         };

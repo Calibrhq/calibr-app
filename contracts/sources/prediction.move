@@ -358,6 +358,26 @@ module calibr::prediction {
         // ============================================================
         // STEP 3: CALCULATE PAYOUT (Model 1)
         // ============================================================
+        // 
+        // CRITICAL: The pool is the SUM OF LOSER R VALUES, not stakes!
+        // 
+        // From the Calibr doc:
+        // "Only risked points from losing users enter the pool.
+        //  Protected points are never touched."
+        // 
+        // Pool construction:
+        //   pool = Σ R_losers (sum of risk values from losers)
+        // 
+        // Winner payout:
+        //   payout = stake + (my_R / Σ R_winners) × pool
+        // 
+        // Loser payout:
+        //   payout = stake - my_R (keep protected portion)
+        // 
+        // This ensures ZERO-SUM:
+        //   - Winners gain exactly what losers lose
+        //   - No money is created or destroyed
+        //   - Total money in system = total money out
         
         let stake = calibr::get_prediction_stake(prediction);
         let confidence = calibr::get_prediction_confidence(prediction);
@@ -365,15 +385,18 @@ module calibr::prediction {
         
         let _payout = if (won) {
             // Winner gets their stake back plus share of loser pool
-            // loser_pool = loser_count × FIXED_STAKE
+            // 
+            // loser_pool = sum of R values from losing side
             // my_share = (my_risk / total_winner_risk) × loser_pool
             
             let loser_pool = if (market_outcome) {
-                // YES won, NO lost
-                calibr::get_no_count(market) * calibr::fixed_stake()
+                // YES won, NO predictors lost
+                // Pool = sum of NO risk values
+                calibr::get_no_risk_total(market)
             } else {
-                // NO won, YES lost
-                calibr::get_yes_count(market) * calibr::fixed_stake()
+                // NO won, YES predictors lost
+                // Pool = sum of YES risk values
+                calibr::get_yes_risk_total(market)
             };
             
             let total_winner_risk = if (market_outcome) {
@@ -382,19 +405,35 @@ module calibr::prediction {
                 calibr::get_no_risk_total(market)
             };
             
-            // Avoid division by zero (shouldn't happen if there are winners)
+            // Handle edge cases
             if (total_winner_risk == 0) {
-                // Edge case: only losers, no winners
-                // User gets their stake back (this shouldn't happen in practice)
+                // Edge case: no winner risk (shouldn't happen)
+                stake
+            } else if (loser_pool == 0) {
+                // Edge case: no losers (everyone predicted the winning side)
+                // Everyone just gets their stake back - no profit, no loss
                 stake
             } else {
+                // Normal case: distribute loser pool to winners
                 // payout = stake + (my_risk / total_winner_risk) × loser_pool
                 let winnings = math::mul_div(my_risk, loser_pool, total_winner_risk);
                 stake + winnings
             }
         } else {
-            // Loser gets nothing
-            0
+            // Loser keeps their PROTECTED portion (stake - risk)
+            // 
+            // This is the key mechanic that punishes overconfidence:
+            // - 50% confidence: R = 5, keep 95
+            // - 70% confidence: R = 50, keep 50
+            // - 90% confidence: R = 100, keep 0
+            // 
+            // The higher your confidence when wrong, the more you lose.
+            if (my_risk >= stake) {
+                // Max risk case (90% confidence, R = 100)
+                0
+            } else {
+                stake - my_risk
+            }
         };
         
         // ============================================================
@@ -452,7 +491,7 @@ module calibr::prediction {
     // VIEW FUNCTIONS
     // ============================================================
 
-    /// Calculate the potential payout for a prediction if it wins.
+    /// Calculate the potential payout for a prediction given an assumed outcome.
     /// This is a view function - it doesn't modify state.
     /// 
     /// Parameters:
@@ -460,7 +499,9 @@ module calibr::prediction {
     /// - market: The market (can be resolved or not)
     /// - assumed_outcome: The outcome to assume for calculation
     /// 
-    /// Returns: The payout if the prediction wins with assumed_outcome
+    /// Returns: The payout based on the assumed outcome
+    /// 
+    /// IMPORTANT: The pool is the sum of LOSER R VALUES, not stakes!
     public fun calculate_potential_payout(
         prediction: &Prediction,
         market: &Market,
@@ -470,35 +511,43 @@ module calibr::prediction {
         let stake = calibr::get_prediction_stake(prediction);
         let my_risk = calibr::get_prediction_risked(prediction);
         
-        // Check if user would win
-        if (prediction_side != assumed_outcome) {
-            // User would lose
-            return 0
-        };
-        
-        // Calculate loser pool
-        let loser_pool = if (assumed_outcome) {
-            // YES wins, NO loses
-            calibr::get_no_count(market) * calibr::fixed_stake()
+        // Check if user would win or lose
+        if (prediction_side == assumed_outcome) {
+            // User would WIN
+            
+            // Pool = sum of loser R values (not stakes!)
+            let loser_pool = if (assumed_outcome) {
+                // YES wins, NO loses
+                calibr::get_no_risk_total(market)
+            } else {
+                // NO wins, YES loses
+                calibr::get_yes_risk_total(market)
+            };
+            
+            // Total winner R
+            let total_winner_risk = if (assumed_outcome) {
+                calibr::get_yes_risk_total(market)
+            } else {
+                calibr::get_no_risk_total(market)
+            };
+            
+            // Handle edge cases
+            if (total_winner_risk == 0 || loser_pool == 0) {
+                return stake
+            };
+            
+            // payout = stake + (my_risk / total_winner_risk) × loser_pool
+            let winnings = math::mul_div(my_risk, loser_pool, total_winner_risk);
+            stake + winnings
         } else {
-            // NO wins, YES loses
-            calibr::get_yes_count(market) * calibr::fixed_stake()
-        };
-        
-        // Calculate winner risk total
-        let total_winner_risk = if (assumed_outcome) {
-            calibr::get_yes_risk_total(market)
-        } else {
-            calibr::get_no_risk_total(market)
-        };
-        
-        if (total_winner_risk == 0) {
-            return stake  // Edge case
-        };
-        
-        // payout = stake + (my_risk / total_winner_risk) × loser_pool
-        let winnings = math::mul_div(my_risk, loser_pool, total_winner_risk);
-        stake + winnings
+            // User would LOSE
+            // Loser keeps: stake - risk (protected portion)
+            if (my_risk >= stake) {
+                0
+            } else {
+                stake - my_risk
+            }
+        }
     }
 
     /// Calculate the skill score for a prediction given an outcome.
