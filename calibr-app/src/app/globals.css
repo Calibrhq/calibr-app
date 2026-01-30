@@ -1,0 +1,266 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 260 20% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 260 20% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 260 20% 10%;
+
+    --primary: 265 40% 27%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 265 15% 94%;
+    --secondary-foreground: 265 30% 25%;
+
+    --muted: 260 10% 94%;
+    --muted-foreground: 260 15% 45%;
+
+    --accent: 265 20% 92%;
+    --accent-foreground: 265 40% 25%;
+
+    --destructive: 0 60% 50%;
+    --destructive-foreground: 0 0% 98%;
+
+    --success: 145 50% 40%;
+    --success-foreground: 145 10% 98%;
+
+    --border: 260 10% 90%;
+    --input: 260 10% 92%;
+    --ring: 265 40% 27%;
+
+    --radius: 0.75rem;
+
+    /* Custom tokens for Calibr */
+    --lavender: 265 40% 70%;
+    --lavender-muted: 265 25% 55%;
+    --charcoal: 260 15% 12%;
+    --charcoal-light: 260 12% 16%;
+    --near-black: 260 20% 6%;
+    
+    /* Probability colors */
+    --yes-color: 265 40% 35%;
+    --no-color: 260 10% 45%;
+    --yes-bg: 265 30% 95%;
+    --no-bg: 260 10% 95%;
+
+    /* Reputation tiers */
+    --tier-novice: 260 20% 50%;
+    --tier-calibrated: 265 50% 45%;
+    --tier-expert: 280 60% 50%;
+    --tier-oracle: 290 70% 55%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 260 20% 10%;
+    --sidebar-primary: 265 40% 27%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 265 15% 94%;
+    --sidebar-accent-foreground: 265 30% 25%;
+    --sidebar-border: 260 10% 90%;
+    --sidebar-ring: 265 40% 27%;
+  }
+
+  .dark {
+    --background: 260 20% 6%;
+    --foreground: 260 10% 92%;
+
+    --card: 260 15% 10%;
+    --card-foreground: 260 10% 92%;
+
+    --popover: 260 15% 12%;
+    --popover-foreground: 260 10% 92%;
+
+    --primary: 265 45% 55%;
+    --primary-foreground: 260 10% 98%;
+
+    --secondary: 265 30% 18%;
+    --secondary-foreground: 265 20% 85%;
+
+    --muted: 260 15% 15%;
+    --muted-foreground: 260 10% 55%;
+
+    --accent: 265 40% 25%;
+    --accent-foreground: 265 20% 90%;
+
+    --destructive: 0 60% 50%;
+    --destructive-foreground: 0 0% 98%;
+
+    --success: 145 50% 40%;
+    --success-foreground: 145 10% 98%;
+
+    --border: 260 15% 18%;
+    --input: 260 15% 15%;
+    --ring: 265 45% 55%;
+
+    /* Dark mode probability colors */
+    --yes-color: 265 55% 55%;
+    --no-color: 260 10% 45%;
+    --yes-bg: 265 40% 15%;
+    --no-bg: 260 10% 12%;
+
+    --sidebar-background: 260 15% 8%;
+    --sidebar-foreground: 260 10% 85%;
+    --sidebar-primary: 265 45% 55%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 265 30% 20%;
+    --sidebar-accent-foreground: 265 20% 90%;
+    --sidebar-border: 260 15% 15%;
+    --sidebar-ring: 265 45% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  /* Typography scale */
+  h1 {
+    @apply text-3xl md:text-4xl font-semibold tracking-tight;
+  }
+
+  h2 {
+    @apply text-2xl md:text-3xl font-semibold tracking-tight;
+  }
+
+  h3 {
+    @apply text-xl font-medium tracking-tight;
+  }
+
+  /* Number styling for data displays */
+  .font-mono-numbers {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer components {
+  /* Noise texture overlay for dark sections */
+  .bg-noise {
+    position: relative;
+  }
+  
+  .bg-noise::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+
+  /* Gradient backgrounds */
+  .bg-gradient-dark {
+    background: linear-gradient(135deg, hsl(260 20% 6%) 0%, hsl(265 15% 12%) 100%);
+  }
+
+  .bg-gradient-hero {
+    background: linear-gradient(180deg, hsl(265 40% 27% / 0.05) 0%, transparent 50%);
+  }
+
+  /* Probability bar styling */
+  .probability-bar {
+    @apply h-2 rounded-full overflow-hidden;
+    background: hsl(var(--muted));
+  }
+
+  .probability-bar-fill {
+    @apply h-full rounded-full transition-all duration-500 ease-out;
+    background: hsl(var(--primary));
+  }
+
+  /* Horizontal confidence bar */
+  .confidence-bar-horizontal {
+    @apply h-3 rounded-full overflow-hidden flex;
+  }
+
+  .confidence-bar-yes {
+    @apply h-full transition-all duration-500 ease-out;
+    background: hsl(var(--primary));
+  }
+
+  .confidence-bar-no {
+    @apply h-full transition-all duration-500 ease-out;
+    background: hsl(var(--muted));
+  }
+
+  /* Card hover states */
+  .market-card {
+    @apply bg-card border border-border rounded-xl p-6 transition-all duration-200;
+  }
+
+  .market-card:hover {
+    @apply border-primary/30 shadow-lg;
+    box-shadow: 0 8px 30px -10px hsl(var(--primary) / 0.1);
+  }
+
+  /* Confidence slider track */
+  .confidence-slider [data-orientation="horizontal"] {
+    @apply h-2 rounded-full;
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--primary)) 50%,
+      hsl(var(--destructive)) 100%
+    );
+  }
+
+  /* Subtle glow for important elements */
+  .glow-subtle {
+    box-shadow: 0 0 40px -10px hsl(var(--primary) / 0.3);
+  }
+
+  /* Soft shadow for cards */
+  .shadow-soft {
+    box-shadow: 0 4px 20px -4px hsl(var(--foreground) / 0.08);
+  }
+
+  /* Feature card style */
+  .feature-card {
+    @apply bg-card border border-border rounded-2xl p-6 transition-all duration-200;
+  }
+
+  .feature-card:hover {
+    @apply border-primary/20;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px -12px hsl(var(--primary) / 0.15);
+  }
+
+  /* Step indicator */
+  .step-number {
+    @apply w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm;
+  }
+
+  /* Status badges */
+  .badge-active {
+    @apply px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary;
+  }
+
+  .badge-resolving {
+    @apply px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500/10 text-yellow-600;
+  }
+
+  .badge-resolved {
+    @apply px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
