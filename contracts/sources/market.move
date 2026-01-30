@@ -204,11 +204,12 @@
 ///    - If NO wins: they lose their R (but no one gets it)
 
 module calibr::market {
-    use sui::object::{Self, UID};
+    use sui::object::{Self, UID, ID};
     use sui::tx_context::{Self, TxContext};
     use sui::transfer;
     use calibr::calibr::{Self, Market};
     use calibr::math;
+    use calibr::events;
 
     // ============================================================
     // CAPABILITY OBJECTS
@@ -305,6 +306,16 @@ module calibr::market {
             ctx
         );
         
+        // Get market ID before sharing (for event)
+        let market_id = calibr::get_market_id(&market);
+        
+        // Emit event for indexing
+        events::emit_market_created(
+            market_id,
+            question,
+            authority,
+        );
+        
         // Share the market so multiple users can interact with it
         // This is critical - shared objects allow concurrent access
         transfer::public_share_object(market);
@@ -333,7 +344,23 @@ module calibr::market {
         // Cannot lock an already resolved market
         assert!(!calibr::is_market_resolved(market), EMarketAlreadyResolved);
         
+        // Get market state for event
+        let market_id = calibr::get_market_id(market);
+        let yes_count = calibr::get_yes_count(market);
+        let no_count = calibr::get_no_count(market);
+        let yes_risk_total = calibr::get_yes_risk_total(market);
+        let no_risk_total = calibr::get_no_risk_total(market);
+        
         calibr::lock_market(market);
+        
+        // Emit event for indexing
+        events::emit_market_locked(
+            market_id,
+            yes_count,
+            no_count,
+            yes_risk_total,
+            no_risk_total,
+        );
     }
 
     /// Resolve a market with the final outcome.
@@ -362,7 +389,7 @@ module calibr::market {
         _admin_cap: &AdminCap,
         market: &mut Market,
         outcome: bool,
-        _ctx: &mut TxContext
+        ctx: &mut TxContext
     ) {
         // Cannot resolve an already resolved market
         assert!(!calibr::is_market_resolved(market), EMarketAlreadyResolved);
@@ -370,9 +397,36 @@ module calibr::market {
         // Market must be locked first (prevents gaming)
         assert!(calibr::is_market_locked(market), EMarketNotLocked);
         
+        // Gather data for event BEFORE resolving
+        let market_id = calibr::get_market_id(market);
+        let yes_count = calibr::get_yes_count(market);
+        let no_count = calibr::get_no_count(market);
+        let yes_risk_total = calibr::get_yes_risk_total(market);
+        let no_risk_total = calibr::get_no_risk_total(market);
+        
         // Set the outcome - this triggers the settlement phase
         // After this, users can settle their predictions
         calibr::resolve_market(market, outcome);
+        
+        // Calculate event data
+        let (winner_count, loser_count, total_winner_risk, loser_pool) = if (outcome) {
+            // YES won
+            (yes_count, no_count, yes_risk_total, no_risk_total)
+        } else {
+            // NO won
+            (no_count, yes_count, no_risk_total, yes_risk_total)
+        };
+        
+        // Emit event for indexing
+        events::emit_market_resolved(
+            market_id,
+            outcome,
+            winner_count,
+            loser_count,
+            total_winner_risk,
+            loser_pool,
+            tx_context::sender(ctx),
+        );
     }
 
     // ============================================================

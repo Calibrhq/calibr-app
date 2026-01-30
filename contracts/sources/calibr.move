@@ -523,4 +523,18 @@ module calibr::calibr {
     public fun get_prediction_risked(prediction: &Prediction): u64 {
         prediction.risked
     }
+    
+    /// Get the prediction's object ID
+    public fun get_prediction_id(prediction: &Prediction): ID {
+        object::uid_to_inner(&prediction.id)
+    }
+    
+    // ============================================================
+    // ACCESSOR FUNCTIONS - UserProfile
+    // ============================================================
+    
+    /// Get the profile's object ID
+    public fun get_profile_id(profile: &UserProfile): ID {
+        object::uid_to_inner(&profile.id)
+    }
 }

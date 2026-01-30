@@ -109,6 +109,7 @@ module calibr::reputation {
     use sui::transfer;
     use calibr::calibr::{Self, UserProfile};
     use calibr::math;
+    use calibr::events;
 
     // ============================================================
     // CONSTANTS
@@ -166,6 +167,17 @@ module calibr::reputation {
             STARTING_COUNT,            // 0 - no predictions yet
             STARTING_MAX_CONFIDENCE,   // 70 - new tier cap (abuse prevention)
             ctx
+        );
+        
+        // Get profile ID for event (before transfer)
+        let profile_id = calibr::get_profile_id(&profile);
+        
+        // Emit event for indexing
+        events::emit_profile_created(
+            sender,
+            profile_id,
+            STARTING_REPUTATION,
+            STARTING_MAX_CONFIDENCE,
         );
         
         // Transfer to sender - they now own this profile
@@ -236,10 +248,18 @@ module calibr::reputation {
         ctx: &TxContext
     ) {
         // Verify caller owns this profile
-        assert!(calibr::get_profile_owner(profile) == tx_context::sender(ctx), ENotProfileOwner);
+        let user = tx_context::sender(ctx);
+        assert!(calibr::get_profile_owner(profile) == user, ENotProfileOwner);
         
         // ============================================================
-        // STEP 1: COMPUTE SKILL (Model 2)
+        // STEP 1: CAPTURE PRE-UPDATE STATE FOR EVENTS
+        // ============================================================
+        let old_score = calibr::get_reputation_score(profile);
+        let old_max_confidence = calibr::get_max_confidence(profile);
+        let n = calibr::get_reputation_count(profile);
+        
+        // ============================================================
+        // STEP 2: COMPUTE SKILL (Model 2)
         // ============================================================
         // 
         // skill = 1 - (c - o)² where:
@@ -251,7 +271,7 @@ module calibr::reputation {
         let skill_score = math::skill(confidence, was_correct);
         
         // ============================================================
-        // STEP 2: UPDATE ROLLING AVERAGE
+        // STEP 3: UPDATE ROLLING AVERAGE
         // ============================================================
         // 
         // Formula: new_rep = (old_rep × n + skill) / (n + 1)
@@ -261,9 +281,6 @@ module calibr::reputation {
         // - Early predictions have high initial impact
         // - Impact diminishes as more predictions accumulate
         //
-        let old_score = calibr::get_reputation_score(profile);
-        let n = calibr::get_reputation_count(profile);
-        
         // Calculate new reputation score
         // Note: When n=0, this gives: (old_score × 0 + skill) / 1 = skill
         // This means the first prediction's skill becomes the new reputation
@@ -272,7 +289,7 @@ module calibr::reputation {
         let new_score = total / (n + 1);
         
         // ============================================================
-        // STEP 3: INCREMENT REPUTATION COUNT
+        // STEP 4: INCREMENT REPUTATION COUNT
         // ============================================================
         // 
         // This must happen AFTER calculating new_score (uses old n)
@@ -282,7 +299,7 @@ module calibr::reputation {
         calibr::increment_reputation_count(profile);
         
         // ============================================================
-        // STEP 4: UPDATE MAX CONFIDENCE TIER
+        // STEP 5: UPDATE MAX CONFIDENCE TIER
         // ============================================================
         // 
         // Tier thresholds:
@@ -296,6 +313,30 @@ module calibr::reputation {
         //
         let new_max_confidence = calibr::calculate_max_confidence(new_score);
         calibr::set_max_confidence(profile, new_max_confidence);
+        
+        // ============================================================
+        // STEP 6: EMIT EVENTS
+        // ============================================================
+        // Events enable off-chain indexing and auditing.
+        
+        // Emit ReputationUpdated event
+        events::emit_reputation_updated(
+            user,
+            old_score,
+            new_score,
+            skill_score,
+            n,
+            confidence,
+            was_correct,
+        );
+        
+        // Emit ConfidenceCapChanged event (only if cap actually changed)
+        events::emit_confidence_cap_changed(
+            user,
+            old_max_confidence,
+            new_max_confidence,
+            new_score,
+        );
     }
 
     // ============================================================

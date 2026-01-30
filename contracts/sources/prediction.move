@@ -108,6 +108,7 @@ module calibr::prediction {
     use calibr::calibr::{Self, UserProfile, Market, Prediction};
     use calibr::math;
     use calibr::reputation;
+    use calibr::events;
 
     // ============================================================
     // ERRORS
@@ -268,6 +269,21 @@ module calibr::prediction {
             stake,
             risk,
             ctx
+        );
+        
+        // Get prediction ID for event (before transfer)
+        let prediction_id = calibr::get_prediction_id(&prediction);
+        
+        // Emit event for indexing
+        events::emit_prediction_placed(
+            prediction_id,
+            market_id,
+            sender,
+            side,
+            confidence,
+            risk,
+            stake,
+            max_confidence,
         );
         
         // Transfer to sender - they now own this prediction
@@ -438,7 +454,23 @@ module calibr::prediction {
         };
         
         // ============================================================
-        // STEP 4: UPDATE REPUTATION (Model 2)
+        // STEP 4: CAPTURE PRE-UPDATE STATE FOR EVENTS
+        // ============================================================
+        
+        let prediction_id = calibr::get_prediction_id(prediction);
+        let market_id = calibr::get_market_id(market);
+        let user = calibr::get_profile_owner(profile);
+        
+        // Capture reputation state BEFORE update
+        let old_reputation_score = calibr::get_reputation_score(profile);
+        let old_max_confidence = calibr::get_max_confidence(profile);
+        let prediction_count_before = calibr::get_reputation_count(profile);
+        
+        // Calculate skill score (same calculation as reputation module)
+        let skill_score = math::skill(confidence, won);
+        
+        // ============================================================
+        // STEP 5: UPDATE REPUTATION (Model 2)
         // ============================================================
         // 
         // This delegates to reputation::update_reputation_internal which:
@@ -466,16 +498,53 @@ module calibr::prediction {
         reputation::update_reputation_internal(profile, confidence, won);
         
         // ============================================================
-        // STEP 5: MARK PREDICTION AS SETTLED
+        // STEP 6: MARK PREDICTION AS SETTLED
         // ============================================================
         // This prevents double-settlement
         
         calibr::set_prediction_settled(prediction);
         
-        // NOTE: Token transfer would happen here if we had a treasury
-        // For now, the payout is calculated but not transferred
-        // The frontend can display the payout value by reading the prediction
-        // and market state
+        // ============================================================
+        // STEP 7: EMIT EVENTS
+        // ============================================================
+        // Events enable off-chain indexing and auditing.
+        // Judges can reconstruct the entire system state from events.
+        
+        // Capture reputation state AFTER update
+        let new_reputation_score = calibr::get_reputation_score(profile);
+        let new_max_confidence = calibr::get_max_confidence(profile);
+        
+        // Emit PredictionSettled event
+        events::emit_prediction_settled(
+            prediction_id,
+            market_id,
+            user,
+            won,
+            confidence,
+            my_risk,
+            _payout,
+            stake,
+            skill_score,
+        );
+        
+        // Emit ReputationUpdated event
+        events::emit_reputation_updated(
+            user,
+            old_reputation_score,
+            new_reputation_score,
+            skill_score,
+            prediction_count_before,
+            confidence,
+            won,
+        );
+        
+        // Emit ConfidenceCapChanged event (only if cap actually changed)
+        events::emit_confidence_cap_changed(
+            user,
+            old_max_confidence,
+            new_max_confidence,
+            new_reputation_score,
+        );
     }
 
     // ============================================================
