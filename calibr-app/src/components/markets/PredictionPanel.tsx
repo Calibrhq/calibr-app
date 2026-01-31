@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { ConfidenceSliderEnhanced } from "./ConfidenceSliderEnhanced";
 import { ConfirmationModal } from "./ConfirmationModal";
 import { cn } from "@/lib/utils";
-import { ThumbsUp, ThumbsDown, Sparkles, AlertCircle, UserPlus, Wallet } from "lucide-react";
+import { ThumbsUp, ThumbsDown, Sparkles, AlertCircle, UserPlus, Wallet, Coins } from "lucide-react";
 import { toast } from "sonner";
 import { useWalletContext } from "@/contexts/WalletContext";
-import { buildPlacePredictionTx } from "@/lib/calibr-transactions";
+import { buildPlacePredictionWithPointsTx } from "@/lib/points-transactions";
 import { getErrorMessage } from "@/lib/calibr-types";
+import { usePointsBalance } from "@/hooks/usePointsBalance";
+import Link from "next/link";
 
 interface PredictionPanelProps {
   marketId: string;
@@ -31,6 +33,9 @@ export function PredictionPanel({ marketId, question }: PredictionPanelProps) {
     signAndExecuteTransaction,
     refreshProfile,
   } = useWalletContext();
+
+  // Get user's points balance
+  const { data: pointsBalance, refetch: refetchPoints } = usePointsBalance();
 
   const [selectedSide, setSelectedSide] = useState<"yes" | "no" | null>(null);
   const [confidence, setConfidence] = useState(60);
@@ -88,13 +93,28 @@ export function PredictionPanel({ marketId, question }: PredictionPanelProps) {
       return;
     }
 
+    if (!pointsBalance?.id) {
+      toast.error("No points balance found", {
+        description: "Please buy points first to make predictions",
+      });
+      return;
+    }
+
+    if (pointsBalance.balance < stake) {
+      toast.error("Insufficient points", {
+        description: `You have ${pointsBalance.balance} points, need ${stake}`,
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      // Build the transaction
-      const tx = buildPlacePredictionTx(
+      // Build the transaction with points balance
+      const tx = buildPlacePredictionWithPointsTx(
         userProfile.id,
         marketId,
+        pointsBalance.id,
         selectedSide === "yes",
         confidence
       );
@@ -108,8 +128,9 @@ export function PredictionPanel({ marketId, question }: PredictionPanelProps) {
           duration: 4000,
         });
 
-        // Refresh profile to get updated stats
+        // Refresh profile and points balance
         await refreshProfile();
+        await refetchPoints();
 
         // Reset form
         setShowConfirmation(false);
@@ -193,6 +214,35 @@ export function PredictionPanel({ marketId, question }: PredictionPanelProps) {
               </>
             )}
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // No points balance state
+  if (!pointsBalance || pointsBalance.balance < stake) {
+    return (
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
+        <div className="px-6 py-4 bg-muted/30 border-b border-border">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <h3 className="font-medium">Make a Prediction</h3>
+          </div>
+        </div>
+        <div className="p-6 text-center">
+          <Coins className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <p className="text-muted-foreground mb-2">
+            {pointsBalance ? `You have ${pointsBalance.balance} points` : "No points balance found"}
+          </p>
+          <p className="text-sm text-muted-foreground mb-4">
+            You need at least {stake} points to make a prediction
+          </p>
+          <Link href="/points">
+            <Button className="gap-2">
+              <Coins className="h-4 w-4" />
+              Buy Points
+            </Button>
+          </Link>
         </div>
       </div>
     );
