@@ -71,9 +71,17 @@ export default function AdminPage() {
         }
     };
 
+    const [resolvingId, setResolvingId] = useState<string | null>(null);
+    const [confirmingId, setConfirmingId] = useState<string | null>(null);
+    const [confirmOutcome, setConfirmOutcome] = useState<boolean>(false);
+    const [isLocking, setIsLocking] = useState<string | null>(null);
+
+
+
     const handleLock = async (marketId: string) => {
-        if (!isConnected) return;
+        if (!isConnected || isLocking) return;
         try {
+            setIsLocking(marketId);
             const tx = buildLockMarketTx(adminCapId, marketId);
             const result = await signAndExecuteTransaction(tx);
             if (result) {
@@ -83,23 +91,39 @@ export default function AdminPage() {
         } catch (e) {
             console.error(e);
             toast.error("Failed to lock market");
+        } finally {
+            setIsLocking(null);
         }
     };
 
-    const handleResolve = async (marketId: string, outcome: boolean) => {
-        if (!isConnected) return;
-        if (!confirm(`Are you sure you want to resolve this market as ${outcome ? "YES" : "NO"}?`)) return;
+    const initiateResolve = (e: React.MouseEvent, marketId: string, outcome: boolean) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setConfirmingId(marketId);
+        setConfirmOutcome(outcome);
+    };
+
+    const executeResolve = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!isConnected || !confirmingId) return;
+        if (resolvingId) return;
 
         try {
-            const tx = buildResolveMarketTx(adminCapId, marketId, outcome);
+            setResolvingId(confirmingId);
+            const tx = buildResolveMarketTx(adminCapId, confirmingId, confirmOutcome);
             const result = await signAndExecuteTransaction(tx);
             if (result) {
-                toast.success(`Market resolved: ${outcome ? "YES" : "NO"}`);
+                toast.success(`Market resolved: ${confirmOutcome ? "YES" : "NO"}`);
+                setConfirmingId(null);
                 refetch();
             }
         } catch (e) {
             console.error(e);
             toast.error("Failed to resolve market");
+        } finally {
+            setResolvingId(null);
         }
     };
 
@@ -244,29 +268,61 @@ export default function AdminPage() {
                                     {market.status === 'active' && (
                                         <button
                                             onClick={() => handleLock(market.id)}
-                                            className="px-4 py-2 bg-secondary text-secondary-foreground text-sm font-medium rounded-lg hover:bg-secondary/80 flex items-center gap-2"
+                                            disabled={!!isLocking}
+                                            className="px-4 py-2 bg-secondary text-secondary-foreground text-sm font-medium rounded-lg hover:bg-secondary/80 flex items-center gap-2 disabled:opacity-50"
                                         >
-                                            <Lock className="w-4 h-4" />
+                                            {isLocking === market.id ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
                                             Lock
                                         </button>
                                     )}
 
-                                    {(market.status === 'active' || market.status === 'resolving') && (
+                                    {market.status === 'resolving' && (
                                         <>
-                                            <button
-                                                onClick={() => handleResolve(market.id, true)}
-                                                className="px-4 py-2 bg-green-500/10 text-green-600 border border-green-500/20 text-sm font-medium rounded-lg hover:bg-green-500/20 flex items-center gap-2"
-                                            >
-                                                <Check className="w-4 h-4" />
-                                                Yes
-                                            </button>
-                                            <button
-                                                onClick={() => handleResolve(market.id, false)}
-                                                className="px-4 py-2 bg-red-500/10 text-red-600 border border-red-500/20 text-sm font-medium rounded-lg hover:bg-red-500/20 flex items-center gap-2"
-                                            >
-                                                <X className="w-4 h-4" />
-                                                No
-                                            </button>
+                                            {confirmingId === market.id ? (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs font-bold text-muted-foreground mr-1">
+                                                        Confirm {confirmOutcome ? "YES" : "NO"}?
+                                                    </span>
+                                                    <button
+                                                        onClick={(e) => executeResolve(e)}
+                                                        disabled={!!resolvingId}
+                                                        className="px-3 py-1 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:bg-primary/90 flex items-center gap-1"
+                                                    >
+                                                        {resolvingId ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                                                        Confirm
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            setConfirmingId(null);
+                                                        }}
+                                                        disabled={!!resolvingId}
+                                                        className="px-3 py-1 bg-muted text-muted-foreground text-xs font-medium rounded-lg hover:bg-muted/80"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <button
+                                                        onClick={(e) => initiateResolve(e, market.id, true)}
+                                                        disabled={!!resolvingId || !!confirmingId}
+                                                        className="px-4 py-2 bg-green-500/10 text-green-600 border border-green-500/20 text-sm font-medium rounded-lg hover:bg-green-500/20 flex items-center gap-2 disabled:opacity-50"
+                                                    >
+                                                        <Check className="w-4 h-4" />
+                                                        Yes
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => initiateResolve(e, market.id, false)}
+                                                        disabled={!!resolvingId || !!confirmingId}
+                                                        className="px-4 py-2 bg-red-500/10 text-red-600 border border-red-500/20 text-sm font-medium rounded-lg hover:bg-red-500/20 flex items-center gap-2 disabled:opacity-50"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                        No
+                                                    </button>
+                                                </>
+                                            )}
                                         </>
                                     )}
 

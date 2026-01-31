@@ -88,17 +88,19 @@ export function buildPlacePredictionTx(
 export function buildSettlePredictionTx(
     profileId: string,
     predictionId: string,
-    marketId: string
+    marketId: string,
+    pointsBalanceId: string
 ): Transaction {
     const tx = new Transaction();
     const packageId = getPackageId(DEFAULT_NETWORK);
 
     tx.moveCall({
-        target: `${packageId}::prediction::settle_prediction`,
+        target: `${packageId}::prediction::settle_prediction_with_points`,
         arguments: [
             tx.object(profileId),     // User's profile (mut)
             tx.object(predictionId),  // Prediction to settle (mut)
             tx.object(marketId),      // Market (immutable)
+            tx.object(pointsBalanceId) // Points Balance (mut)
         ],
     });
 
