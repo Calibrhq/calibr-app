@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable */
 
 import { ReactNode, useMemo, useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -32,7 +33,7 @@ export function SuiProvider({ children }: SuiProviderProps) {
   // Initialize dApp Kit on client side only
   useEffect(() => {
     setIsClient(true);
-    
+
     // Dynamic import to avoid SSR issues
     const initDAppKit = async () => {
       try {
@@ -46,7 +47,7 @@ export function SuiProvider({ children }: SuiProviderProps) {
         console.error("Failed to load dApp Kit:", error);
       }
     };
-    
+
     initDAppKit();
   }, []);
 

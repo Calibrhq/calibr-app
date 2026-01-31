@@ -5,13 +5,15 @@ import { Button } from "@/components/ui/button";
 import { ConfidenceSliderEnhanced } from "./ConfidenceSliderEnhanced";
 import { ConfirmationModal } from "./ConfirmationModal";
 import { cn } from "@/lib/utils";
-import { ThumbsUp, ThumbsDown, Sparkles, AlertCircle } from "lucide-react";
+import { ThumbsUp, ThumbsDown, Sparkles, AlertCircle, UserPlus, Wallet } from "lucide-react";
 import { toast } from "sonner";
+import { useWalletContext } from "@/contexts/WalletContext";
+import { buildPlacePredictionTx } from "@/lib/calibr-transactions";
+import { getErrorMessage } from "@/lib/calibr-types";
 
 interface PredictionPanelProps {
   marketId: string;
   question: string;
-  maxConfidence?: number;
 }
 
 // Calculate risk based on Calibr's formula
@@ -19,11 +21,22 @@ function calculateRisk(confidence: number): number {
   return Math.max(5, Math.round(100 * (confidence - 50) / 40));
 }
 
-export function PredictionPanel({ marketId, question, maxConfidence = 70 }: PredictionPanelProps) {
+export function PredictionPanel({ marketId, question }: PredictionPanelProps) {
+  const {
+    isConnected,
+    hasProfile,
+    userProfile,
+    maxConfidence,
+    createProfile,
+    signAndExecuteTransaction,
+    refreshProfile,
+  } = useWalletContext();
+
   const [selectedSide, setSelectedSide] = useState<"yes" | "no" | null>(null);
   const [confidence, setConfidence] = useState(60);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
 
   // Fixed stake of 100 (as per Calibr protocol)
   const stake = 100;
@@ -47,22 +60,143 @@ export function PredictionPanel({ marketId, question, maxConfidence = 70 }: Pred
     setShowConfirmation(true);
   };
 
-  const handleConfirm = async () => {
-    setIsSubmitting(true);
-    
-    // TODO: Actual contract call will go here
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    toast.success("Prediction placed!", {
-      description: `${selectedSide?.toUpperCase()} at ${confidence}% confidence`,
-      duration: 4000,
-    });
-    
-    setShowConfirmation(false);
-    setIsSubmitting(false);
-    setSelectedSide(null);
-    setConfidence(60);
+  const handleCreateProfile = async () => {
+    setIsCreatingProfile(true);
+    try {
+      const result = await createProfile();
+      if (result.success) {
+        toast.success("Profile created!", {
+          description: "You can now make predictions",
+        });
+      } else {
+        toast.error("Failed to create profile", {
+          description: result.error,
+        });
+      }
+    } catch (error) {
+      toast.error("Failed to create profile", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
+    } finally {
+      setIsCreatingProfile(false);
+    }
   };
+
+  const handleConfirm = async () => {
+    if (!userProfile?.id || !selectedSide) {
+      toast.error("Missing profile or selection");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Build the transaction
+      const tx = buildPlacePredictionTx(
+        userProfile.id,
+        marketId,
+        selectedSide === "yes",
+        confidence
+      );
+
+      // Sign and execute
+      const result = await signAndExecuteTransaction(tx);
+
+      if (result) {
+        toast.success("Prediction placed!", {
+          description: `${selectedSide.toUpperCase()} at ${confidence}% confidence`,
+          duration: 4000,
+        });
+
+        // Refresh profile to get updated stats
+        await refreshProfile();
+
+        // Reset form
+        setShowConfirmation(false);
+        setSelectedSide(null);
+        setConfidence(60);
+      } else {
+        toast.error("Transaction failed");
+      }
+    } catch (error) {
+      console.error("Place prediction error:", error);
+
+      // Try to extract abort code from error
+      let errorMessage = "Transaction failed";
+      if (error instanceof Error) {
+        const match = error.message.match(/MoveAbort.*?(\d+)/);
+        if (match) {
+          errorMessage = getErrorMessage(parseInt(match[1]));
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      toast.error("Prediction failed", {
+        description: errorMessage,
+      });
+    } finally {
+      setShowConfirmation(false);
+      setIsSubmitting(false);
+    }
+  };
+
+  // Not connected state
+  if (!isConnected) {
+    return (
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
+        <div className="px-6 py-4 bg-muted/30 border-b border-border">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <h3 className="font-medium">Make a Prediction</h3>
+          </div>
+        </div>
+        <div className="p-6 text-center">
+          <Wallet className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <p className="text-muted-foreground mb-4">
+            Connect your wallet to make predictions
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // No profile state
+  if (!hasProfile) {
+    return (
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
+        <div className="px-6 py-4 bg-muted/30 border-b border-border">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <h3 className="font-medium">Make a Prediction</h3>
+          </div>
+        </div>
+        <div className="p-6 text-center">
+          <UserPlus className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <p className="text-muted-foreground mb-4">
+            Create a profile to start making predictions and building your reputation
+          </p>
+          <Button
+            onClick={handleCreateProfile}
+            disabled={isCreatingProfile}
+            className="gap-2"
+          >
+            {isCreatingProfile ? (
+              <>
+                <span className="animate-spin">⏳</span>
+                Creating Profile...
+              </>
+            ) : (
+              <>
+                <UserPlus className="h-4 w-4" />
+                Create Profile
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -140,7 +274,7 @@ export function PredictionPanel({ marketId, question, maxConfidence = 70 }: Pred
                   <AlertCircle className="h-4 w-4 text-muted-foreground" />
                   <span>Potential Outcomes</span>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-green-500/10 rounded-lg p-3 border border-green-500/20">
                     <p className="text-xs text-green-600 dark:text-green-400 mb-1">If Correct</p>
@@ -197,3 +331,4 @@ export function PredictionPanel({ marketId, question, maxConfidence = 70 }: Pred
     </>
   );
 }
+

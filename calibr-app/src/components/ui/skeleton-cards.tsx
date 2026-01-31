@@ -1,9 +1,10 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { CSSProperties } from "react";
 
 // Base shimmer skeleton
-function Shimmer({ className }: { className?: string }) {
+function Shimmer({ className, style }: { className?: string; style?: CSSProperties }) {
   return (
     <div
       className={cn(
@@ -13,6 +14,7 @@ function Shimmer({ className }: { className?: string }) {
         "before:bg-gradient-to-r before:from-transparent before:via-white/10 before:to-transparent",
         className
       )}
+      style={style}
     />
   );
 }
@@ -127,7 +129,7 @@ export function MarketDetailSkeleton() {
   return (
     <div className="space-y-8">
       <Shimmer className="h-4 w-32" />
-      
+
       <div className="space-y-4">
         <div className="flex gap-3">
           <Shimmer className="h-8 w-20" />
@@ -136,12 +138,12 @@ export function MarketDetailSkeleton() {
         <Shimmer className="h-10 w-full" />
         <Shimmer className="h-10 w-3/4" />
       </div>
-      
+
       <div className="bg-card border border-border rounded-xl p-6 space-y-4">
         <Shimmer className="h-4 w-40" />
         <Shimmer className="h-20 w-full" />
       </div>
-      
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="bg-card border border-border rounded-xl p-5 space-y-3">
           <Shimmer className="h-4 w-24" />

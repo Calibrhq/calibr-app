@@ -11,14 +11,14 @@ export const NETWORK_URLS: Record<NetworkType, string> = {
 
 // Package IDs per network
 export const PACKAGE_IDS: Record<NetworkType, string> = {
-  testnet: "0xc99b9b813061ebcf76ddd0043c65583bb56b7e6be192eb515d001e804666efd1",
+  testnet: "0xfc4c4573da3eb0618e3f495b315d585cb7cf439dbc807494108b2d85dc2ef502",
   mainnet: "", // TODO: Update with mainnet deployment
   devnet: "", // TODO: Update with devnet deployment
 };
 
 // Admin Cap IDs per network (for market creation)
 export const ADMIN_CAP_IDS: Record<NetworkType, string> = {
-  testnet: "0xc45366703c5dbc55a35dbe47cacf01227e54e78ac917c6c84705f8b5f56a28ad",
+  testnet: "0xf9440fbce53a69db21b702d0125c2e3354a64a3c58ba8a4e987b6abed6f250f9",
   mainnet: "",
   devnet: "",
 };
@@ -34,10 +34,10 @@ export async function createDAppKitInstance() {
     import("@mysten/dapp-kit-react"),
     import("@mysten/sui/grpc"),
   ]);
-  
+
   const { createDAppKit } = dappKitModule;
   const { SuiGrpcClient } = suiModule;
-  
+
   return createDAppKit({
     networks: [...SUPPORTED_NETWORKS] as unknown as ["testnet", "mainnet", "devnet"],
     defaultNetwork: DEFAULT_NETWORK,
@@ -54,13 +54,13 @@ export async function createDAppKitInstance() {
 // Helper to get explorer URL for transactions
 export function getExplorerUrl(type: "tx" | "object" | "address", id: string, network: NetworkType = DEFAULT_NETWORK) {
   const baseUrl = `https://suiscan.xyz/${network}`;
-  
+
   const pathMap = {
     tx: "tx",
     object: "object",
     address: "account",
   };
-  
+
   return `${baseUrl}/${pathMap[type]}/${id}`;
 }
 
