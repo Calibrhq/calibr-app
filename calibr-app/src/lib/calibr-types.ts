@@ -134,11 +134,33 @@ export function getTierFromScore(score: number): UserTier {
 }
 
 /**
- * Decode UTF-8 bytes to string (for market question)
+ * Decode market question from on-chain format.
+ * The question is stored as array of ASCII codes representing a hex string,
+ * which then needs to be decoded from hex to get the actual UTF-8 text.
  */
-export function decodeQuestion(bytes: number[]): string {
+export function decodeQuestion(bytes: number[] | string): string {
     try {
-        return new TextDecoder().decode(new Uint8Array(bytes));
+        let hexString: string;
+
+        if (Array.isArray(bytes)) {
+            // Step 1: Convert array of ASCII codes to string (gives us hex string like "57696c6c...")
+            hexString = String.fromCharCode(...bytes);
+        } else if (typeof bytes === 'string') {
+            hexString = bytes;
+        } else {
+            return "";
+        }
+
+        // Step 2: Check if it's hex-encoded and decode
+        if (/^[0-9a-fA-F]+$/.test(hexString) && hexString.length > 20) {
+            const decodedBytes = new Uint8Array(
+                hexString.match(/.{1,2}/g)!.map((byte: string) => parseInt(byte, 16))
+            );
+            return new TextDecoder().decode(decodedBytes);
+        }
+
+        // Already plain text
+        return hexString;
     } catch {
         return "";
     }
