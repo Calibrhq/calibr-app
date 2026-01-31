@@ -518,4 +518,78 @@ module calibr::events {
             b"New"
         }
     }
+
+    // ============================================================
+    // POINTS ECONOMY EVENTS
+    // ============================================================
+
+    /// Emitted when a user purchases points with SUI.
+    public struct PointsPurchased has copy, drop {
+        /// The user who bought points
+        user: address,
+        /// Amount of points purchased
+        points_amount: u64,
+        /// SUI paid in MIST
+        sui_paid: u64,
+        /// Price per 100 points at purchase time (MIST)
+        price_per_100: u64,
+    }
+
+    /// Emitted when a user redeems points for SUI.
+    public struct PointsRedeemed has copy, drop {
+        /// The user who redeemed
+        user: address,
+        /// Amount of points redeemed
+        points_amount: u64,
+        /// Net SUI received after fees (MIST)
+        sui_received: u64,
+        /// Fee charged (MIST)
+        fee: u64,
+        /// Breakdown: fee burned (2.5%)
+        fee_burned: u64,
+        /// Breakdown: fee to treasury (2.5%)
+        fee_treasury: u64,
+    }
+
+    /// Emit PointsPurchased event
+    public(package) fun emit_points_purchased(
+        user: address,
+        points_amount: u64,
+        sui_paid: u64,
+    ) {
+        // Calculate price per 100 at time of purchase
+        let price_per_100 = if (points_amount > 0) {
+            (sui_paid * 100) / points_amount
+        } else {
+            0
+        };
+        
+        event::emit(PointsPurchased {
+            user,
+            points_amount,
+            sui_paid,
+            price_per_100,
+        });
+    }
+
+    /// Emit PointsRedeemed event
+    public(package) fun emit_points_redeemed(
+        user: address,
+        points_amount: u64,
+        sui_received: u64,
+        fee: u64,
+    ) {
+        // Fee split: 50% burned, 50% treasury
+        let fee_burned = fee / 2;
+        let fee_treasury = fee - fee_burned;
+        
+        event::emit(PointsRedeemed {
+            user,
+            points_amount,
+            sui_received,
+            fee,
+            fee_burned,
+            fee_treasury,
+        });
+    }
 }

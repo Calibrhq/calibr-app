@@ -673,4 +673,259 @@ module calibr::prediction {
         let winnings = math::mul_div(my_risk, loser_pool, total_winner_risk);
         stake + winnings
     }
+
+    // ============================================================
+    // POINTS ECONOMY INTEGRATION (V2)
+    // ============================================================
+    // 
+    // These functions integrate with the Points Economy Layer.
+    // They require users to have a PointsBalance and deduct/credit
+    // points for predictions.
+    // 
+    // The original place_prediction and settle_prediction functions
+    // are preserved for backward compatibility with existing tests.
+
+    use calibr::points_token::{Self, PointsBalance};
+
+    /// Error: Caller does not own the PointsBalance
+    const ENotBalanceOwner: u64 = 420;
+
+    /// Place a prediction using the Points Economy.
+    /// 
+    /// This version:
+    /// 1. Deducts 100 points from user's PointsBalance
+    /// 2. Creates the prediction (same as original)
+    /// 3. Points are "escrowed" in the market conceptually
+    /// 
+    /// On settlement, winners receive credits to their PointsBalance.
+    public entry fun place_prediction_with_points(
+        profile: &UserProfile,
+        market: &mut Market,
+        points_balance: &mut PointsBalance,
+        side: bool,
+        confidence: u64,
+        ctx: &mut TxContext
+    ) {
+        let sender = tx_context::sender(ctx);
+        
+        // Validate ownership of both profile and points balance
+        assert!(
+            calibr::get_profile_owner(profile) == sender,
+            ENotProfileOwner
+        );
+        assert!(
+            points_token::get_owner(points_balance) == sender,
+            ENotBalanceOwner
+        );
+        
+        // Validate market is open
+        assert!(
+            calibr::is_market_open(market),
+            EMarketNotOpen
+        );
+        
+        // Validate confidence range
+        assert!(
+            confidence >= math::min_confidence(),
+            EConfidenceTooLow
+        );
+        assert!(
+            confidence <= math::max_confidence(),
+            EConfidenceTooHigh
+        );
+        
+        // Validate confidence cap
+        let max_confidence = calibr::get_max_confidence(profile);
+        assert!(
+            confidence <= max_confidence,
+            EConfidenceExceedsUserCap
+        );
+        
+        // DEDUCT STAKE FROM POINTS BALANCE
+        // This will abort if insufficient balance
+        let stake = points_token::deduct_stake(points_balance);
+        
+        // Compute risk
+        let risk = math::risk_from_confidence(confidence);
+        
+        // Get market ID
+        let market_id = calibr::get_market_id(market);
+        
+        // Update market state
+        if (side) {
+            calibr::add_yes_prediction(market, risk);
+        } else {
+            calibr::add_no_prediction(market, risk);
+        };
+        
+        // Create prediction
+        let prediction = calibr::new_prediction(
+            market_id,
+            side,
+            confidence,
+            stake,
+            risk,
+            ctx
+        );
+        
+        // Get prediction ID for event
+        let prediction_id = calibr::get_prediction_id(&prediction);
+        
+        // Emit event
+        events::emit_prediction_placed(
+            prediction_id,
+            market_id,
+            sender,
+            side,
+            confidence,
+            risk,
+            stake,
+            max_confidence,
+        );
+        
+        // Transfer prediction to sender
+        transfer::public_transfer(prediction, sender);
+    }
+
+    /// Settle a prediction with Points Economy integration.
+    /// 
+    /// This version:
+    /// 1. Calculates payout (same logic as original)
+    /// 2. Credits the payout to user's PointsBalance
+    /// 3. Updates reputation (same as original)
+    /// 
+    /// For losers: payout = stake - risk (protected portion)
+    /// For winners: payout = stake + share_of_loser_pool
+    public entry fun settle_prediction_with_points(
+        profile: &mut UserProfile,
+        prediction: &mut Prediction,
+        market: &Market,
+        points_balance: &mut PointsBalance,
+        ctx: &TxContext
+    ) {
+        let sender = tx_context::sender(ctx);
+        
+        // Validate ownerships
+        assert!(
+            calibr::get_profile_owner(profile) == sender,
+            ENotProfileOwner
+        );
+        assert!(
+            points_token::get_owner(points_balance) == sender,
+            ENotBalanceOwner
+        );
+        
+        // Validate settlement conditions
+        assert!(
+            calibr::is_market_resolved(market),
+            EMarketNotResolved
+        );
+        assert!(
+            !calibr::is_prediction_settled(prediction),
+            EPredictionAlreadySettled
+        );
+        assert!(
+            calibr::get_prediction_market_id(prediction) == calibr::get_market_id(market),
+            EPredictionMarketMismatch
+        );
+        
+        // Determine outcome
+        let prediction_side = calibr::get_prediction_side(prediction);
+        let market_outcome_opt = calibr::get_market_outcome(market);
+        let market_outcome = *option::borrow(&market_outcome_opt);
+        let won = prediction_side == market_outcome;
+        
+        // Get prediction details
+        let stake = calibr::get_prediction_stake(prediction);
+        let confidence = calibr::get_prediction_confidence(prediction);
+        let my_risk = calibr::get_prediction_risked(prediction);
+        
+        // Calculate payout
+        let payout = if (won) {
+            let loser_pool = if (market_outcome) {
+                calibr::get_no_risk_total(market)
+            } else {
+                calibr::get_yes_risk_total(market)
+            };
+            
+            let total_winner_risk = if (market_outcome) {
+                calibr::get_yes_risk_total(market)
+            } else {
+                calibr::get_no_risk_total(market)
+            };
+            
+            if (total_winner_risk == 0) {
+                stake
+            } else if (loser_pool == 0) {
+                stake
+            } else {
+                let winnings = math::mul_div(my_risk, loser_pool, total_winner_risk);
+                stake + winnings
+            }
+        } else {
+            // Loser keeps protected portion
+            if (my_risk >= stake) {
+                0
+            } else {
+                stake - my_risk
+            }
+        };
+        
+        // CREDIT PAYOUT TO POINTS BALANCE
+        points_token::credit_payout(points_balance, payout);
+        
+        // Capture state for events
+        let prediction_id = calibr::get_prediction_id(prediction);
+        let market_id = calibr::get_market_id(market);
+        let user = calibr::get_profile_owner(profile);
+        let old_reputation_score = calibr::get_reputation_score(profile);
+        let old_max_confidence = calibr::get_max_confidence(profile);
+        let prediction_count_before = calibr::get_reputation_count(profile);
+        let skill_score = math::skill(confidence, won);
+        
+        // Update reputation
+        reputation::update_reputation_internal(profile, confidence, won);
+        
+        // Mark prediction as settled
+        calibr::set_prediction_settled(prediction);
+        
+        // Capture new state
+        let new_reputation_score = calibr::get_reputation_score(profile);
+        let new_max_confidence = calibr::get_max_confidence(profile);
+        
+        // Emit settlement event
+        events::emit_prediction_settled(
+            prediction_id,
+            market_id,
+            user,
+            won,
+            confidence,
+            my_risk,
+            payout,
+            stake,
+            skill_score,
+        );
+        
+        // Emit reputation event
+        events::emit_reputation_updated(
+            user,
+            old_reputation_score,
+            new_reputation_score,
+            skill_score,
+            prediction_count_before,
+            confidence,
+            won,
+        );
+        
+        // Emit confidence cap change if applicable
+        if (old_max_confidence != new_max_confidence) {
+            events::emit_confidence_cap_changed(
+                user,
+                old_max_confidence,
+                new_max_confidence,
+                new_reputation_score,
+            );
+        };
+    }
 }
+
