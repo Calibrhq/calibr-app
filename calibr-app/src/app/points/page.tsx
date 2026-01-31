@@ -294,7 +294,7 @@ export default function PointsPage() {
                                         Select Amount
                                     </h2>
 
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
                                         {BUY_PRESETS.map((preset) => (
                                             <button
                                                 key={preset.points}
@@ -302,15 +302,15 @@ export default function PointsPage() {
                                                     setSelectedPoints(preset.points);
                                                     setIsCustom(false);
                                                 }}
-                                                className={`p-4 rounded-xl border-2 transition-all ${!isCustom && selectedPoints === preset.points
+                                                className={`p-3 rounded-lg border-2 transition-all ${!isCustom && selectedPoints === preset.points
                                                     ? "border-primary bg-primary/10"
                                                     : "border-border hover:border-primary/50"
                                                     }`}
                                             >
-                                                <div className="font-bold text-xl text-foreground">
+                                                <div className="font-bold text-lg text-foreground">
                                                     {preset.points.toLocaleString()}
                                                 </div>
-                                                <div className="text-xs text-muted-foreground mt-1">
+                                                <div className="text-xs text-muted-foreground">
                                                     {preset.label}
                                                 </div>
                                             </button>
