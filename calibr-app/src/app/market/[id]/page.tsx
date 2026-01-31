@@ -179,6 +179,16 @@ export default function MarketDetailPage() {
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold leading-tight text-balance">
               {market.question}
             </h1>
+            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <CountdownTimer targetDate={market.deadline || 0} size="md" />
+              </div>
+              <div className="w-1 h-1 rounded-full bg-border" />
+              <div className="flex items-center gap-1.5">
+                <Users className="w-4 h-4" />
+                <span>{market.yes_count + market.no_count} votes</span>
+              </div>
+            </div>
           </div>
 
           {/* Market Stats */}
