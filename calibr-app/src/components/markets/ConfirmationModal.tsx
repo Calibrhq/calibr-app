@@ -72,12 +72,12 @@ export function ConfirmationModal({
           <div className="grid grid-cols-2 gap-3">
             <div className={cn(
               "rounded-xl p-4 text-center border-2 transition-colors",
-              side === "yes" 
-                ? "bg-green-500/10 border-green-500/30" 
+              side === "yes"
+                ? "bg-green-500/10 border-green-500/30"
                 : "bg-red-500/10 border-red-500/30"
             )}>
               <div className="flex items-center justify-center gap-2 mb-2">
-                {side === "yes" 
+                {side === "yes"
                   ? <ThumbsUp className="h-5 w-5 text-green-500" />
                   : <ThumbsDown className="h-5 w-5 text-red-500" />
                 }
@@ -129,16 +129,16 @@ export function ConfirmationModal({
 
           {/* Actions */}
           <div className="flex gap-3 pt-2">
-            <Button 
-              variant="outline" 
-              onClick={onClose} 
+            <Button
+              variant="outline"
+              onClick={onClose}
               className="flex-1"
               disabled={isLoading}
             >
               Go Back
             </Button>
-            <Button 
-              onClick={handleConfirm} 
+            <Button
+              onClick={handleConfirm}
               className="flex-1 gap-2"
               disabled={isLoading}
             >

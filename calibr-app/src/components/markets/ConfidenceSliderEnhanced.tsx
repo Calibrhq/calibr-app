@@ -85,9 +85,8 @@ export function ConfidenceSliderEnhanced({
   // Calculate position for the tooltip
   const position = ((value - minValue) / (maxValue - minValue)) * 100;
 
-  // Calculate gradient for track
+  // Standard solid color for track
   const getTrackGradient = () => {
-    const normalizedPos = (value - 50) / 40; // 0 to 1
     return `linear-gradient(90deg, 
       hsl(var(--primary)) 0%, 
       hsl(var(--primary)) ${position}%, 
@@ -109,7 +108,7 @@ export function ConfidenceSliderEnhanced({
               </TooltipTrigger>
               <TooltipContent className="max-w-xs">
                 <p className="text-sm">
-                  Higher confidence = higher risk. The formula is: 
+                  Higher confidence = higher risk. The formula is:
                   <br />
                   <code className="text-xs bg-muted px-1 rounded">Risk = max(5, 100 × (c - 50) / 40)</code>
                 </p>
@@ -117,7 +116,7 @@ export function ConfidenceSliderEnhanced({
             </Tooltip>
           </TooltipProvider>
         </div>
-        
+
         <div className={cn(
           "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-300",
           riskInfo.bgColor,
@@ -130,13 +129,13 @@ export function ConfidenceSliderEnhanced({
       </div>
 
       {/* Slider Container */}
-      <div 
+      <div
         className="relative pt-6 pb-2"
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
       >
         {/* Floating Confidence Value */}
-        <div 
+        <div
           className={cn(
             "absolute -top-1 transform -translate-x-1/2 transition-all duration-200",
             isHovering ? "scale-110" : "scale-100"
@@ -166,7 +165,7 @@ export function ConfidenceSliderEnhanced({
               disabled && "opacity-50 cursor-not-allowed"
             )}
           />
-          
+
           {/* Track markers */}
           <div className="absolute top-1/2 -translate-y-1/2 w-full flex justify-between px-2 pointer-events-none">
             {[50, 60, 70, 80, 90].filter(v => v <= maxValue).map((marker) => (
@@ -202,13 +201,7 @@ export function ConfidenceSliderEnhanced({
         </div>
         <div className="h-2 rounded-full bg-muted overflow-hidden">
           <div
-            className={cn(
-              "h-full rounded-full transition-all duration-300",
-              riskInfo.level === "low" && "bg-green-500",
-              riskInfo.level === "moderate" && "bg-yellow-500",
-              riskInfo.level === "high" && "bg-orange-500",
-              riskInfo.level === "extreme" && "bg-red-500"
-            )}
+            className="h-full rounded-full transition-all duration-300 bg-primary/80"
             style={{ width: `${risk}%` }}
           />
         </div>

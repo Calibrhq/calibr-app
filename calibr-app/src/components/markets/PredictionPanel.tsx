@@ -263,47 +263,54 @@ export function PredictionPanel({ marketId, question }: PredictionPanelProps) {
         </div>
 
         <div className="p-6 space-y-6">
-          {/* YES/NO Toggle */}
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => handleSideSelect("yes")}
               className={cn(
-                "relative py-5 px-6 rounded-xl font-medium text-lg transition-all duration-300",
-                "flex flex-col items-center gap-2",
+                "relative py-3 px-4 rounded-xl font-bold text-lg transition-all duration-300",
+                "flex flex-col items-center gap-2 border-2",
+                "active:scale-95 hover:shadow-md",
                 selectedSide === "yes"
-                  ? "bg-green-500 text-white ring-2 ring-green-500 ring-offset-2 ring-offset-background shadow-lg"
-                  : "bg-secondary text-secondary-foreground hover:bg-green-500/10 hover:text-green-600 hover:border-green-500/30 border border-transparent"
+                  ? "bg-gradient-to-br from-green-500 to-green-600 border-green-600 text-white shadow-green-500/25 shadow-lg scale-[1.02]"
+                  : "bg-background border-border text-muted-foreground hover:border-green-500/50 hover:bg-green-500/5 hover:text-green-600 hover:-translate-y-0.5"
               )}
             >
               <ThumbsUp className={cn(
                 "h-6 w-6 transition-transform",
-                selectedSide === "yes" && "scale-110"
-              )} />
-              <span>Yes</span>
+                selectedSide === "yes" ? "scale-110 rotate-[-12deg]" : "scale-100 group-hover:rotate-[-12deg]"
+              )} strokeWidth={2.5} />
+              <span>YES</span>
               {selectedSide === "yes" && (
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center">
-                  <div className="w-2 h-2 bg-green-500 rounded-full" />
+                <div className="absolute top-2 right-2">
+                  <span className="flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                  </span>
                 </div>
               )}
             </button>
             <button
               onClick={() => handleSideSelect("no")}
               className={cn(
-                "relative py-5 px-6 rounded-xl font-medium text-lg transition-all duration-300",
-                "flex flex-col items-center gap-2",
+                "relative py-3 px-4 rounded-xl font-bold text-lg transition-all duration-300",
+                "flex flex-col items-center gap-2 border-2",
+                "active:scale-95 hover:shadow-md",
                 selectedSide === "no"
-                  ? "bg-red-500 text-white ring-2 ring-red-500 ring-offset-2 ring-offset-background shadow-lg"
-                  : "bg-secondary text-secondary-foreground hover:bg-red-500/10 hover:text-red-600 hover:border-red-500/30 border border-transparent"
+                  ? "bg-gradient-to-br from-red-500 to-red-600 border-red-600 text-white shadow-red-500/25 shadow-lg scale-[1.02]"
+                  : "bg-background border-border text-muted-foreground hover:border-red-500/50 hover:bg-red-500/5 hover:text-red-600 hover:-translate-y-0.5"
               )}
             >
               <ThumbsDown className={cn(
                 "h-6 w-6 transition-transform",
-                selectedSide === "no" && "scale-110"
-              )} />
-              <span>No</span>
+                selectedSide === "no" ? "scale-110 rotate-[12deg]" : "scale-100 group-hover:rotate-[12deg]"
+              )} strokeWidth={2.5} />
+              <span>NO</span>
               {selectedSide === "no" && (
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center">
-                  <div className="w-2 h-2 bg-red-500 rounded-full" />
+                <div className="absolute top-2 right-2">
+                  <span className="flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                  </span>
                 </div>
               )}
             </button>
