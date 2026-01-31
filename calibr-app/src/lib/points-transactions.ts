@@ -5,7 +5,7 @@
  */
 
 import { Transaction } from "@mysten/sui/transactions";
-import { getPackageId, DEFAULT_NETWORK } from "./sui-config";
+import { getPackageId, DEFAULT_NETWORK, CONTRACT_IDS } from "./sui-config";
 
 // ============================================================
 // POINTS ECONOMY CONSTANTS
@@ -21,25 +21,24 @@ export const POINTS_UNIT = 100;
 export const MIST_PER_SUI = 1_000_000_000;
 
 // ============================================================
-// SHARED OBJECT IDS (will be updated after deployment)
-// These are placeholder values - update after deploying contracts
+// SHARED OBJECT IDS
 // ============================================================
 
 export const POINTS_ECONOMY_OBJECTS = {
     testnet: {
-        treasury: "0x750bfa4994e5dea75c16d5d4cb5c76faa12784743c1060b4f13093e602fe2645", // Treasury shared object ID
-        marketConfig: "0xa9349a9b4ca1d425ef889f5f70b55c211f82c7a91bb6af494ef8277f9118cd84", // PointsMarketConfig shared object ID
-        balanceRegistry: "0xe4bb22104b39819b6e452c564ceba79b03ca453f29f5bc3f9734a59c5f5d47e6", // BalanceRegistry shared object ID
+        treasury: CONTRACT_IDS.testnet.treasuryId,
+        marketConfig: CONTRACT_IDS.testnet.pointsMarketConfigId,
+        balanceRegistry: CONTRACT_IDS.testnet.balanceRegistryId,
     },
     mainnet: {
-        treasury: "",
-        marketConfig: "",
-        balanceRegistry: "",
+        treasury: CONTRACT_IDS.mainnet.treasuryId,
+        marketConfig: CONTRACT_IDS.mainnet.pointsMarketConfigId,
+        balanceRegistry: CONTRACT_IDS.mainnet.balanceRegistryId,
     },
     devnet: {
-        treasury: "",
-        marketConfig: "",
-        balanceRegistry: "",
+        treasury: CONTRACT_IDS.devnet.treasuryId,
+        marketConfig: CONTRACT_IDS.devnet.pointsMarketConfigId,
+        balanceRegistry: CONTRACT_IDS.devnet.balanceRegistryId,
     },
 };
 

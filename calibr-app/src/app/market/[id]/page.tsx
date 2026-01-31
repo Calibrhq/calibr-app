@@ -52,6 +52,7 @@ async function fetchMarketFromChain(marketId: string): Promise<ParsedMarket | nu
     return parseMarket(marketId, {
       id: marketId,
       question: fields.question || [],
+      deadline: Number(fields.deadline || 0),
       yes_risk_total: Number(fields.yes_risk_total || 0),
       no_risk_total: Number(fields.no_risk_total || 0),
       yes_count: Number(fields.yes_count || 0),

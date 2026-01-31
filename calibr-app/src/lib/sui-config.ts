@@ -9,18 +9,29 @@ export const NETWORK_URLS: Record<NetworkType, string> = {
   devnet: "https://fullnode.devnet.sui.io:443",
 };
 
-// Package IDs per network
-export const PACKAGE_IDS: Record<NetworkType, string> = {
-  testnet: "0x98282ab2bd75ccad7e6fbbfb8b6d6824dc1648318208c0631d9b289629785f04",
-  mainnet: "", // TODO: Update with mainnet deployment
-  devnet: "", // TODO: Update with devnet deployment
-};
-
-// Admin Cap IDs per network (for market creation)
-export const ADMIN_CAP_IDS: Record<NetworkType, string> = {
-  testnet: "0xf408df574b2c37d985bf1df15e312919cdcd841f7661605ea7949b0655772c2f",
-  mainnet: "",
-  devnet: "",
+// Deployment addresses per network
+export const CONTRACT_IDS = {
+  testnet: {
+    packageId: "0xdb05c1410aacbc50253049280eb64226eef1b78c1f59b2da398a333a7a12aebe",
+    adminCapId: "0xee91dd6333518aa4d450c15b7b2ba79b32c5bc4159352cb0bee96dbfa75bdeb3",
+    treasuryId: "0x261a86c9c5e963ea8a2cd586934519cd3576651badc6c3c77ac432775ba53116",
+    pointsMarketConfigId: "0x4094ea5bc1bd756b90ac1a06a13846b103bfd1c2606d99b6fa0074acd2a9638b",
+    balanceRegistryId: "0x9cd41e2f97564fd4d570a72ddbb33fe1a07280aed46c64c3ca34dbcdf01ce1b5",
+  },
+  devnet: {
+    packageId: "",
+    adminCapId: "",
+    treasuryId: "",
+    pointsMarketConfigId: "",
+    balanceRegistryId: "",
+  },
+  mainnet: {
+    packageId: "",
+    adminCapId: "",
+    treasuryId: "",
+    pointsMarketConfigId: "",
+    balanceRegistryId: "",
+  }
 };
 
 // Default network for the app
@@ -65,8 +76,9 @@ export function getExplorerUrl(type: "tx" | "object" | "address", id: string, ne
 }
 
 // Get package ID for current network
+// Get package ID for current network
 export function getPackageId(network: NetworkType = DEFAULT_NETWORK): string {
-  return PACKAGE_IDS[network];
+  return CONTRACT_IDS[network].packageId;
 }
 
 // Fixed stake amount as per Calibr protocol

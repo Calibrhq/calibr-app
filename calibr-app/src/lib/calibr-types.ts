@@ -98,6 +98,7 @@ export interface ParsedUserProfile {
 export interface ParsedMarket {
     id: string;
     question: string;
+    deadline?: number;  // Optional as older markets might not have it
     yesRiskTotal: number;
     noRiskTotal: number;
     yesCount: number;
@@ -207,6 +208,7 @@ export function parseMarket(id: string, fields: ChainMarket): ParsedMarket {
     return {
         id,
         question: decodeQuestion(fields.question),
+        deadline: fields.deadline ? Number(fields.deadline) : undefined,
         yesRiskTotal: yesRisk,
         noRiskTotal: noRisk,
         yesCount,
