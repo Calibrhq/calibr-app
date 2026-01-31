@@ -237,3 +237,81 @@ export function buildSettlePredictionWithPointsTx(
 
     return tx;
 }
+
+// ============================================================
+// REDEMPTION CONSTANTS & FUNCTIONS
+// ============================================================
+
+// Redemption requirements
+export const REDEMPTION_REQUIREMENTS = {
+    minReputation: 800,      // Proven tier
+    minPredictions: 20,      // Settled predictions
+    minEpochsHeld: 4,        // ~4 weeks
+    maxWeeklyPct: 10,        // 10% of balance per week
+    feePct: 5,               // 5% redemption fee
+    minRedemption: 100,      // Minimum redeemable
+};
+
+/**
+ * Calculate estimated SUI payout after 5% fee.
+ * 
+ * @param pointsAmount - Points to redeem (must be multiple of 100)
+ * @returns Estimated net SUI payout in MIST
+ */
+export function estimateRedemptionPayout(pointsAmount: number): {
+    grossMist: number;
+    feeMist: number;
+    netMist: number;
+} {
+    if (pointsAmount % POINTS_UNIT !== 0) {
+        throw new Error(`Points must be in multiples of ${POINTS_UNIT}`);
+    }
+
+    const units = pointsAmount / POINTS_UNIT;
+    const grossMist = units * POINTS_BASE_PRICE_MIST;
+    const feeMist = Math.floor((grossMist * REDEMPTION_REQUIREMENTS.feePct) / 100);
+    const netMist = grossMist - feeMist;
+
+    return { grossMist, feeMist, netMist };
+}
+
+/**
+ * Build transaction to redeem points for SUI.
+ * 
+ * Requirements (enforced on-chain):
+ * - Reputation >= 800
+ * - Predictions >= 20
+ * - Epochs held >= 4
+ * - Within weekly 10% limit
+ * - Amount >= 100 and multiple of 100
+ * 
+ * @param profileId - User's UserProfile object
+ * @param pointsBalanceId - User's PointsBalance object
+ * @param treasuryId - Treasury shared object
+ * @param marketConfigId - PointsMarketConfig shared object
+ * @param amount - Points to redeem (multiple of 100)
+ */
+export function buildRedeemPointsTx(
+    profileId: string,
+    pointsBalanceId: string,
+    treasuryId: string,
+    marketConfigId: string,
+    amount: number
+): Transaction {
+    const tx = new Transaction();
+    const packageId = getPackageId(DEFAULT_NETWORK);
+
+    tx.moveCall({
+        target: `${packageId}::redemption::redeem_points`,
+        arguments: [
+            tx.object(profileId),
+            tx.object(pointsBalanceId),
+            tx.object(treasuryId),
+            tx.object(marketConfigId),
+            tx.pure.u64(amount),
+        ],
+    });
+
+    return tx;
+}
+

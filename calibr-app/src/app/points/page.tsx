@@ -4,29 +4,33 @@ import React, { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { useWallet } from "@/hooks/useWallet";
 import { usePointsBalance } from "@/hooks/usePointsBalance";
-import { Link } from "lucide-react"; // Wait, Link is from next/link usually. Lucide has LinkIcon.
-import NextLink from "next/link"; // Rename to avoid conflict if Lucide has Link
+import NextLink from "next/link";
 import {
     Coins,
     ArrowRight,
+    ArrowDownUp,
     Shield,
     TrendingUp,
     Lock,
     Wallet,
     Sparkles,
     AlertCircle,
-    ChevronRight
+    ChevronRight,
+    AlertTriangle,
+    CheckCircle
 } from "lucide-react";
 import { InfoTooltip, EducationalBanner } from "@/components/ui/InfoTooltip";
 import {
     POINTS_BASE_PRICE_MIST,
     POINTS_UNIT,
     mistToSui,
-    suiToMist,
     estimatePointsCost,
     POINTS_ECONOMY_OBJECTS,
     buildBuyPointsTx,
-    buildCreateBalanceAndBuyPointsTx
+    buildCreateBalanceAndBuyPointsTx,
+    buildRedeemPointsTx,
+    estimateRedemptionPayout,
+    REDEMPTION_REQUIREMENTS
 } from "@/lib/points-transactions";
 import { DEFAULT_NETWORK } from "@/lib/sui-config";
 
@@ -38,27 +42,48 @@ const BUY_PRESETS = [
     { points: 5000, label: "Pro" },
 ];
 
-export default function BuyPointsPage() {
-    const { isConnected, signAndExecuteTransaction } = useWallet();
-    const { data: pointsBalance } = usePointsBalance();
+export default function PointsPage() {
+    const { isConnected, signAndExecuteTransaction, reputation, profileId } = useWallet();
+    const { data: pointsBalance, isLoading: isLoadingBalance } = usePointsBalance();
 
+    // Tab state
+    const [activeTab, setActiveTab] = useState<"buy" | "sell">("buy");
+
+    // Buy state
     const [selectedPoints, setSelectedPoints] = useState(1000);
     const [customAmount, setCustomAmount] = useState("");
     const [isCustom, setIsCustom] = useState(false);
     const [isBuying, setIsBuying] = useState(false);
 
-    // Calculate cost
+    // Sell state
+    const [sellAmount, setSellAmount] = useState("");
+    const [isSelling, setIsSelling] = useState(false);
+
+    // Buy calculations
     const pointsToBuy = isCustom ? parseInt(customAmount) || 0 : selectedPoints;
     const estimatedCostMist = useMemo(() => {
         if (pointsToBuy < POINTS_UNIT || pointsToBuy % POINTS_UNIT !== 0) return 0;
         return estimatePointsCost(pointsToBuy);
     }, [pointsToBuy]);
-
     const costInSui = mistToSui(estimatedCostMist);
     const pricePerPoint = costInSui / (pointsToBuy || 1);
-
-    // How many predictions this enables
     const predictionsEnabled = Math.floor(pointsToBuy / 100);
+
+    // Sell calculations
+    const pointsToSell = parseInt(sellAmount) || 0;
+    const sellPayout = useMemo(() => {
+        if (pointsToSell < POINTS_UNIT || pointsToSell % POINTS_UNIT !== 0) {
+            return { grossMist: 0, feeMist: 0, netMist: 0 };
+        }
+        return estimateRedemptionPayout(pointsToSell);
+    }, [pointsToSell]);
+
+    // Eligibility check (simplified - real check happens on-chain)
+    const currentBalance = pointsBalance?.balance || 0;
+    const maxRedeemable = Math.floor(currentBalance * 0.1 / 100) * 100; // 10% limit, rounded to 100
+    const meetsReputationReq = reputation >= REDEMPTION_REQUIREMENTS.minReputation;
+    // Note: We can't check predictions count or epochs held from frontend easily
+    // The contract will validate on-chain
 
     const handleBuyPoints = async () => {
         if (!isConnected) {
@@ -81,11 +106,8 @@ export default function BuyPointsPage() {
                 return;
             }
 
-            console.log("Preparing transaction...", { pointsToBuy, estimatedCostMist });
-
             let tx;
             if (pointsBalance) {
-                // User has balance, simple buy
                 tx = buildBuyPointsTx(
                     economyIds.treasury,
                     economyIds.marketConfig,
@@ -94,7 +116,6 @@ export default function BuyPointsPage() {
                     pointsToBuy
                 );
             } else {
-                // Create balance and buy
                 if (!economyIds.balanceRegistry) {
                     toast.error("Balance Registry ID missing");
                     setIsBuying(false);
@@ -113,18 +134,81 @@ export default function BuyPointsPage() {
 
             if (result && result.digest) {
                 toast.success(`Successfully purchased ${pointsToBuy} points!`);
-                // Note: Balance update might take a moment. 
-                // usePointsBalance hook auto-refetches, but we could invalidate query if we had access to queryClient.
-            } else {
-                // User rejected or failed
-                // Toast handled by useWallet usually? or strictly here?
-                // If result is null, it usually failed.
             }
         } catch (error) {
             console.error(error);
             toast.error("Transaction failed");
         } finally {
             setIsBuying(false);
+        }
+    };
+
+    const handleSellPoints = async () => {
+        if (!isConnected) {
+            toast.error("Please connect your wallet first");
+            return;
+        }
+
+        if (!pointsBalance) {
+            toast.error("No points balance found");
+            return;
+        }
+
+        if (!profileId) {
+            toast.error("No profile found");
+            return;
+        }
+
+        if (pointsToSell < POINTS_UNIT || pointsToSell % POINTS_UNIT !== 0) {
+            toast.error(`Points must be sold in multiples of ${POINTS_UNIT}`);
+            return;
+        }
+
+        if (pointsToSell > currentBalance) {
+            toast.error("Insufficient balance");
+            return;
+        }
+
+        try {
+            setIsSelling(true);
+            const economyIds = POINTS_ECONOMY_OBJECTS[DEFAULT_NETWORK as keyof typeof POINTS_ECONOMY_OBJECTS];
+
+            if (!economyIds.treasury || !economyIds.marketConfig) {
+                toast.error("Contract configuration missing");
+                setIsSelling(false);
+                return;
+            }
+
+            const tx = buildRedeemPointsTx(
+                profileId,
+                pointsBalance.id,
+                economyIds.treasury,
+                economyIds.marketConfig,
+                pointsToSell
+            );
+
+            const result = await signAndExecuteTransaction(tx);
+
+            if (result && result.digest) {
+                toast.success(`Successfully redeemed ${pointsToSell} points for ~${mistToSui(sellPayout.netMist).toFixed(4)} SUI!`);
+                setSellAmount("");
+            }
+        } catch (error: any) {
+            console.error(error);
+            // Parse specific errors
+            if (error.message?.includes("520")) {
+                toast.error("Reputation too low (need 800+)");
+            } else if (error.message?.includes("521")) {
+                toast.error("Need at least 20 settled predictions");
+            } else if (error.message?.includes("522")) {
+                toast.error("Points must be held for 4+ epochs");
+            } else if (error.message?.includes("523")) {
+                toast.error("Weekly redemption limit exceeded");
+            } else {
+                toast.error("Redemption failed");
+            }
+        } finally {
+            setIsSelling(false);
         }
     };
 
@@ -137,13 +221,13 @@ export default function BuyPointsPage() {
                         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
                             <NextLink href="/" className="hover:text-foreground transition-colors">Home</NextLink>
                             <ChevronRight className="w-4 h-4" />
-                            <span className="text-foreground">Buy Points</span>
+                            <span className="text-foreground">Points</span>
                         </div>
                         <h1 className="text-3xl font-bold text-foreground mb-3">
-                            Buy Points
+                            Points Exchange
                         </h1>
                         <p className="text-muted-foreground text-lg">
-                            Points are your stake in predictions. Buy with SUI, predict with confidence.
+                            Buy points to make predictions, or sell them back to SUI.
                         </p>
                     </div>
                 </div>
@@ -152,240 +236,399 @@ export default function BuyPointsPage() {
             <div className="container mx-auto px-4 py-8">
                 <div className="max-w-4xl mx-auto">
 
-                    {/* Educational Banner */}
-                    <EducationalBanner
-                        icon={<Sparkles className="w-5 h-5" />}
-                        title="Why do I need points?"
-                        variant="info"
-                        content={
-                            <span>
-                                Points represent your &quot;judgment capacity&quot; in Calibr. Each prediction costs 100 points.
-                                You earn more back when you predict correctly — your skill determines your returns, not your
-                                capital. <NextLink href="/how-it-works" className="text-primary hover:underline">Learn more →</NextLink>
-                            </span>
-                        }
-                    />
+                    {/* Current Balance */}
+                    {isConnected && (
+                        <div className="bg-card border border-border rounded-2xl p-6 mb-8">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-3 rounded-xl bg-amber-500/10">
+                                        <Coins className="w-6 h-6 text-amber-500" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Your Points Balance</p>
+                                        <p className="text-3xl font-bold font-mono-numbers">
+                                            {isLoadingBalance ? "..." : currentBalance.toLocaleString()}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="text-right text-sm text-muted-foreground">
+                                    <p>≈ {Math.floor(currentBalance / 100)} predictions</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
-                    <div className="grid md:grid-cols-5 gap-8 mt-8">
+                    {/* Tabs */}
+                    <div className="flex gap-2 mb-6">
+                        <button
+                            onClick={() => setActiveTab("buy")}
+                            className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all ${activeTab === "buy"
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                }`}
+                        >
+                            <Wallet className="w-4 h-4 inline-block mr-2" />
+                            Buy Points
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("sell")}
+                            className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all ${activeTab === "sell"
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                }`}
+                        >
+                            <ArrowDownUp className="w-4 h-4 inline-block mr-2" />
+                            Sell Points
+                        </button>
+                    </div>
 
-                        {/* Left: Buy Form */}
-                        <div className="md:col-span-3 space-y-6">
+                    {/* Tab Content */}
+                    {activeTab === "buy" ? (
+                        /* BUY TAB */
+                        <div className="grid md:grid-cols-5 gap-8">
+                            <div className="md:col-span-3 space-y-6">
+                                {/* Amount Selection */}
+                                <div className="bg-card border border-border rounded-2xl p-6">
+                                    <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                                        <Coins className="w-5 h-5 text-primary" />
+                                        Select Amount
+                                    </h2>
 
-                            {/* Amount Selection */}
-                            <div className="bg-card border border-border rounded-2xl p-6">
-                                <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                                    <Coins className="w-5 h-5 text-primary" />
-                                    Select Amount
-                                    <InfoTooltip
-                                        title="Points Pricing"
-                                        content={
-                                            <span>
-                                                Points are priced via a <strong>bonding curve</strong>.
-                                                Early buyers get better rates. Current base price: ~0.01 SUI per 100 points.
-                                                Price increases as total supply grows.
-                                            </span>
-                                        }
-                                    />
-                                </h2>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                                        {BUY_PRESETS.map((preset) => (
+                                            <button
+                                                key={preset.points}
+                                                onClick={() => {
+                                                    setSelectedPoints(preset.points);
+                                                    setIsCustom(false);
+                                                }}
+                                                className={`p-4 rounded-xl border-2 transition-all ${!isCustom && selectedPoints === preset.points
+                                                        ? "border-primary bg-primary/10"
+                                                        : "border-border hover:border-primary/50"
+                                                    }`}
+                                            >
+                                                <div className="font-bold text-xl text-foreground">
+                                                    {preset.points.toLocaleString()}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground mt-1">
+                                                    {preset.label}
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
 
-                                {/* Preset Buttons */}
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                                    {BUY_PRESETS.map((preset) => (
+                                    <div className="flex items-center gap-3">
                                         <button
-                                            key={preset.points}
-                                            onClick={() => {
-                                                setSelectedPoints(preset.points);
-                                                setIsCustom(false);
-                                            }}
-                                            className={`p-4 rounded-xl border-2 transition-all ${!isCustom && selectedPoints === preset.points
-                                                ? "border-primary bg-primary/10"
-                                                : "border-border hover:border-primary/50"
+                                            onClick={() => setIsCustom(true)}
+                                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${isCustom
+                                                    ? "bg-primary text-primary-foreground"
+                                                    : "bg-muted text-muted-foreground hover:bg-primary/10"
                                                 }`}
                                         >
-                                            <div className="font-bold text-xl text-foreground">
-                                                {preset.points.toLocaleString()}
-                                            </div>
-                                            <div className="text-xs text-muted-foreground mt-1">
-                                                {preset.label}
-                                            </div>
+                                            Custom
                                         </button>
-                                    ))}
-                                </div>
-
-                                {/* Custom Amount */}
-                                <div className="flex items-center gap-3">
-                                    <button
-                                        onClick={() => setIsCustom(true)}
-                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${isCustom
-                                            ? "bg-primary text-primary-foreground"
-                                            : "bg-muted text-muted-foreground hover:bg-primary/10"
-                                            }`}
-                                    >
-                                        Custom
-                                    </button>
-                                    {isCustom && (
-                                        <input
-                                            type="number"
-                                            min={POINTS_UNIT}
-                                            step={POINTS_UNIT}
-                                            value={customAmount}
-                                            onChange={(e) => setCustomAmount(e.target.value)}
-                                            placeholder={`Multiple of ${POINTS_UNIT}`}
-                                            className="flex-1 px-4 py-2 bg-input border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                        />
-                                    )}
-                                </div>
-
-                                {/* Validation Error */}
-                                {isCustom && customAmount && parseInt(customAmount) % POINTS_UNIT !== 0 && (
-                                    <div className="mt-3 flex items-center gap-2 text-sm text-destructive">
-                                        <AlertCircle className="w-4 h-4" />
-                                        Points must be in multiples of {POINTS_UNIT}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Cost Summary */}
-                            <div className="bg-card border border-border rounded-2xl p-6">
-                                <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                                    <Wallet className="w-5 h-5 text-primary" />
-                                    Cost Summary
-                                </h2>
-
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-center py-2">
-                                        <span className="text-muted-foreground">Points to buy</span>
-                                        <span className="font-semibold text-foreground">{pointsToBuy.toLocaleString()}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center py-2">
-                                        <span className="text-muted-foreground flex items-center gap-1">
-                                            Price per point
-                                            <InfoTooltip
-                                                content="This is the current estimated price. Actual cost may vary slightly due to the bonding curve."
+                                        {isCustom && (
+                                            <input
+                                                type="number"
+                                                min={POINTS_UNIT}
+                                                step={POINTS_UNIT}
+                                                value={customAmount}
+                                                onChange={(e) => setCustomAmount(e.target.value)}
+                                                placeholder={`Multiple of ${POINTS_UNIT}`}
+                                                className="flex-1 px-4 py-2 bg-input border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                                             />
-                                        </span>
-                                        <span className="font-mono text-sm text-foreground">
-                                            ~{pricePerPoint.toFixed(6)} SUI
-                                        </span>
+                                        )}
                                     </div>
-                                    <div className="border-t border-border pt-3">
-                                        <div className="flex justify-between items-center">
-                                            <span className="font-semibold text-foreground">Total Cost</span>
-                                            <span className="font-bold text-2xl text-primary">
-                                                ~{costInSui.toFixed(4)} SUI
+                                </div>
+
+                                {/* Cost Summary */}
+                                <div className="bg-card border border-border rounded-2xl p-6">
+                                    <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                                        <Wallet className="w-5 h-5 text-primary" />
+                                        Cost Summary
+                                    </h2>
+
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center py-2">
+                                            <span className="text-muted-foreground">Points to buy</span>
+                                            <span className="font-semibold text-foreground">{pointsToBuy.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center py-2">
+                                            <span className="text-muted-foreground">Price per point</span>
+                                            <span className="font-mono text-sm text-foreground">
+                                                ~{pricePerPoint.toFixed(6)} SUI
                                             </span>
                                         </div>
-                                        <div className="text-sm text-muted-foreground text-right mt-1">
-                                            Enables {predictionsEnabled} predictions
+                                        <div className="border-t border-border pt-3">
+                                            <div className="flex justify-between items-center">
+                                                <span className="font-semibold text-foreground">Total Cost</span>
+                                                <span className="font-bold text-2xl text-primary">
+                                                    ~{costInSui.toFixed(4)} SUI
+                                                </span>
+                                            </div>
+                                            <div className="text-sm text-muted-foreground text-right mt-1">
+                                                Enables {predictionsEnabled} predictions
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={handleBuyPoints}
+                                        disabled={!isConnected || pointsToBuy < POINTS_UNIT || isBuying}
+                                        className="w-full mt-6 py-4 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground text-primary-foreground font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
+                                    >
+                                        {!isConnected ? (
+                                            "Connect Wallet to Buy"
+                                        ) : isBuying ? (
+                                            "Processing..."
+                                        ) : (
+                                            <>
+                                                Buy {pointsToBuy.toLocaleString()} Points
+                                                <ArrowRight className="w-5 h-5" />
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Right sidebar - Buy info */}
+                            <div className="md:col-span-2 space-y-4">
+                                <div className="bg-card border border-border rounded-2xl p-5">
+                                    <h3 className="font-semibold text-base mb-4 flex items-center gap-2">
+                                        <TrendingUp className="w-4 h-4 text-primary" />
+                                        How Points Work
+                                    </h3>
+                                    <ul className="space-y-3 text-sm text-muted-foreground">
+                                        <li className="flex items-start gap-2">
+                                            <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">1</span>
+                                            <span><strong className="text-foreground">Buy</strong> points with SUI</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">2</span>
+                                            <span><strong className="text-foreground">Stake</strong> 100 points per prediction</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">3</span>
+                                            <span><strong className="text-foreground">Earn</strong> more back when correct</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">4</span>
+                                            <span><strong className="text-foreground">Sell</strong> back to SUI when qualified</span>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-2xl p-5">
+                                    <h3 className="font-semibold text-base mb-2 text-foreground">
+                                        Fair Pricing
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground">
+                                        Points use a <strong className="text-foreground">bonding curve</strong> — early supporters get better rates.
+                                    </p>
+                                    <div className="mt-3 text-xs text-muted-foreground">
+                                        Base rate: ~0.01 SUI per 100 points
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        /* SELL TAB */
+                        <div className="grid md:grid-cols-5 gap-8">
+                            <div className="md:col-span-3 space-y-6">
+                                {/* Eligibility Check */}
+                                <div className="bg-card border border-border rounded-2xl p-6">
+                                    <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                                        <Shield className="w-5 h-5 text-primary" />
+                                        Redemption Requirements
+                                    </h2>
+
+                                    <div className="space-y-3">
+                                        <div className={`flex items-center gap-3 p-3 rounded-lg ${meetsReputationReq ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+                                            {meetsReputationReq ? (
+                                                <CheckCircle className="w-5 h-5 text-green-500" />
+                                            ) : (
+                                                <AlertTriangle className="w-5 h-5 text-red-500" />
+                                            )}
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium">Reputation ≥ 800</p>
+                                                <p className="text-xs text-muted-foreground">Your current: {reputation}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-500/10">
+                                            <AlertCircle className="w-5 h-5 text-yellow-500" />
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium">20+ Settled Predictions</p>
+                                                <p className="text-xs text-muted-foreground">Checked on-chain</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-500/10">
+                                            <Lock className="w-5 h-5 text-yellow-500" />
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium">Points held ≥ 4 epochs (~4 weeks)</p>
+                                                <p className="text-xs text-muted-foreground">Checked on-chain</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted">
+                                            <TrendingUp className="w-5 h-5 text-muted-foreground" />
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium">Weekly limit: 10% of balance</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Max this week: ~{maxRedeemable.toLocaleString()} points
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Buy Button */}
-                                <button
-                                    onClick={handleBuyPoints}
-                                    disabled={!isConnected || pointsToBuy < POINTS_UNIT || isBuying}
-                                    className="w-full mt-6 py-4 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground text-primary-foreground font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
-                                >
-                                    {!isConnected ? (
-                                        "Connect Wallet to Buy"
-                                    ) : isBuying ? (
-                                        "Processing..."
-                                    ) : (
-                                        <>
-                                            Buy {pointsToBuy.toLocaleString()} Points
-                                            <ArrowRight className="w-5 h-5" />
-                                        </>
+                                {/* Sell Amount */}
+                                <div className="bg-card border border-border rounded-2xl p-6">
+                                    <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                                        <ArrowDownUp className="w-5 h-5 text-primary" />
+                                        Sell Points
+                                    </h2>
+
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="text-sm text-muted-foreground mb-2 block">
+                                                Amount to sell (multiple of {POINTS_UNIT})
+                                            </label>
+                                            <input
+                                                type="number"
+                                                min={POINTS_UNIT}
+                                                step={POINTS_UNIT}
+                                                max={currentBalance}
+                                                value={sellAmount}
+                                                onChange={(e) => setSellAmount(e.target.value)}
+                                                placeholder="Enter amount..."
+                                                className="w-full px-4 py-3 bg-input border border-border rounded-lg text-foreground text-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                            />
+                                        </div>
+
+                                        {/* Quick select buttons */}
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => setSellAmount(String(Math.min(100, currentBalance)))}
+                                                className="px-3 py-1.5 text-xs bg-muted rounded-lg hover:bg-muted/80"
+                                            >
+                                                Min (100)
+                                            </button>
+                                            <button
+                                                onClick={() => setSellAmount(String(maxRedeemable))}
+                                                className="px-3 py-1.5 text-xs bg-muted rounded-lg hover:bg-muted/80"
+                                            >
+                                                Max ({maxRedeemable})
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Payout Summary */}
+                                    {pointsToSell >= POINTS_UNIT && (
+                                        <div className="mt-6 p-4 bg-muted/50 rounded-xl space-y-2">
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-muted-foreground">Points to sell</span>
+                                                <span className="font-medium">{pointsToSell.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-muted-foreground">Gross value</span>
+                                                <span className="font-mono">{mistToSui(sellPayout.grossMist).toFixed(4)} SUI</span>
+                                            </div>
+                                            <div className="flex justify-between text-sm text-red-500">
+                                                <span>Fee (5%)</span>
+                                                <span className="font-mono">-{mistToSui(sellPayout.feeMist).toFixed(4)} SUI</span>
+                                            </div>
+                                            <div className="border-t border-border pt-2 flex justify-between">
+                                                <span className="font-semibold">You receive</span>
+                                                <span className="font-bold text-lg text-green-500">
+                                                    ~{mistToSui(sellPayout.netMist).toFixed(4)} SUI
+                                                </span>
+                                            </div>
+                                        </div>
                                     )}
-                                </button>
-                            </div>
-                        </div>
 
-                        {/* Right: Info Cards */}
-                        <div className="md:col-span-2 space-y-4">
-
-                            {/* How it works */}
-                            <div className="bg-card border border-border rounded-2xl p-5">
-                                <h3 className="font-semibold text-base mb-4 flex items-center gap-2">
-                                    <TrendingUp className="w-4 h-4 text-primary" />
-                                    How Points Work
-                                </h3>
-                                <ul className="space-y-3 text-sm text-muted-foreground">
-                                    <li className="flex items-start gap-2">
-                                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">1</span>
-                                        <span><strong className="text-foreground">Buy</strong> points with SUI</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">2</span>
-                                        <span><strong className="text-foreground">Stake</strong> 100 points per prediction</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">3</span>
-                                        <span><strong className="text-foreground">Earn</strong> more back when correct</span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">4</span>
-                                        <span><strong className="text-foreground">Build</strong> reputation for bigger returns</span>
-                                    </li>
-                                </ul>
-                            </div>
-
-                            {/* Security Card */}
-                            <div className="bg-card border border-border rounded-2xl p-5">
-                                <h3 className="font-semibold text-base mb-4 flex items-center gap-2">
-                                    <Shield className="w-4 h-4 text-primary" />
-                                    Security
-                                </h3>
-                                <ul className="space-y-3 text-sm text-muted-foreground">
-                                    <li className="flex items-start gap-2">
-                                        <Lock className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                                        <span>
-                                            <strong className="text-foreground">Non-transferable:</strong> Points can&apos;t be traded
-                                            <InfoTooltip
-                                                content="This prevents speculation and secondary markets. Your points, your predictions."
-                                                position="left"
-                                            />
-                                        </span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <Lock className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                                        <span>
-                                            <strong className="text-foreground">Backed by SUI:</strong> Points have real value
-                                            <InfoTooltip
-                                                content="All SUI spent goes to the Treasury, backing every point in circulation."
-                                                position="left"
-                                            />
-                                        </span>
-                                    </li>
-                                    <li className="flex items-start gap-2">
-                                        <Lock className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                                        <span>
-                                            <strong className="text-foreground">Redeemable:</strong> Cash out to SUI
-                                            <InfoTooltip
-                                                content="Skilled users (800+ rep, 20+ predictions) can redeem points back to SUI with a small fee."
-                                                position="left"
-                                            />
-                                        </span>
-                                    </li>
-                                </ul>
-                            </div>
-
-                            {/* Fair Pricing Card */}
-                            <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-2xl p-5">
-                                <h3 className="font-semibold text-base mb-2 text-foreground">
-                                    Fair Pricing
-                                </h3>
-                                <p className="text-sm text-muted-foreground">
-                                    Points use a <strong className="text-foreground">bonding curve</strong> — early
-                                    supporters get better rates, and price grows organically with demand.
-                                </p>
-                                <div className="mt-3 text-xs text-muted-foreground">
-                                    Base rate: ~0.01 SUI per 100 points
+                                    <button
+                                        onClick={handleSellPoints}
+                                        disabled={!isConnected || !pointsBalance || pointsToSell < POINTS_UNIT || pointsToSell > currentBalance || isSelling}
+                                        className="w-full mt-6 py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:bg-muted disabled:from-muted disabled:to-muted disabled:text-muted-foreground text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
+                                    >
+                                        {!isConnected ? (
+                                            "Connect Wallet"
+                                        ) : isSelling ? (
+                                            "Processing..."
+                                        ) : pointsToSell < POINTS_UNIT ? (
+                                            "Enter amount to sell"
+                                        ) : (
+                                            <>
+                                                Sell {pointsToSell.toLocaleString()} Points
+                                                <ArrowRight className="w-5 h-5" />
+                                            </>
+                                        )}
+                                    </button>
                                 </div>
                             </div>
 
+                            {/* Right sidebar - Sell info */}
+                            <div className="md:col-span-2 space-y-4">
+                                <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-5">
+                                    <h3 className="font-semibold text-base mb-3 flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                                        <AlertTriangle className="w-4 h-4" />
+                                        Why Requirements?
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground mb-3">
+                                        Redemption is restricted to prevent gaming:
+                                    </p>
+                                    <ul className="space-y-2 text-sm text-muted-foreground">
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-amber-500">•</span>
+                                            <span><strong>Reputation</strong> ensures skilled players</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-amber-500">•</span>
+                                            <span><strong>Time lock</strong> prevents quick flips</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-amber-500">•</span>
+                                            <span><strong>Weekly cap</strong> prevents bank runs</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-amber-500">•</span>
+                                            <span><strong>5% fee</strong> discourages arbitrage</span>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <div className="bg-card border border-border rounded-2xl p-5">
+                                    <h3 className="font-semibold text-base mb-3">
+                                        Redemption Summary
+                                    </h3>
+                                    <ul className="space-y-2 text-sm text-muted-foreground">
+                                        <li className="flex justify-between">
+                                            <span>Min rep</span>
+                                            <span className="font-mono">800</span>
+                                        </li>
+                                        <li className="flex justify-between">
+                                            <span>Min predictions</span>
+                                            <span className="font-mono">20</span>
+                                        </li>
+                                        <li className="flex justify-between">
+                                            <span>Hold period</span>
+                                            <span className="font-mono">~4 weeks</span>
+                                        </li>
+                                        <li className="flex justify-between">
+                                            <span>Weekly limit</span>
+                                            <span className="font-mono">10%</span>
+                                        </li>
+                                        <li className="flex justify-between">
+                                            <span>Fee</span>
+                                            <span className="font-mono">5%</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
         </div>
