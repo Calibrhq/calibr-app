@@ -2,17 +2,11 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ConfidenceSlider } from "./ConfidenceSlider";
+import { ConfidenceSliderEnhanced } from "./ConfidenceSliderEnhanced";
 import { ConfirmationModal } from "./ConfirmationModal";
 import { cn } from "@/lib/utils";
-import { Info } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { ThumbsUp, ThumbsDown, Sparkles, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 
 interface PredictionPanelProps {
   marketId: string;
@@ -20,119 +14,173 @@ interface PredictionPanelProps {
   maxConfidence?: number;
 }
 
-export function PredictionPanel({ marketId, question, maxConfidence = 85 }: PredictionPanelProps) {
-  const [selectedSide, setSelectedSide] = useState<"yes" | "no" | null>(null);
-  const [confidence, setConfidence] = useState(65);
-  const [stakeAmount, setStakeAmount] = useState<string>("50");
-  const [showConfirmation, setShowConfirmation] = useState(false);
+// Calculate risk based on Calibr's formula
+function calculateRisk(confidence: number): number {
+  return Math.max(5, Math.round(100 * (confidence - 50) / 40));
+}
 
-  const calculateRisk = (conf: number, stake: number) => {
-    const riskMultiplier = (conf - 50) / 50;
-    return Math.round(stake * (1 + riskMultiplier));
+export function PredictionPanel({ marketId, question, maxConfidence = 70 }: PredictionPanelProps) {
+  const [selectedSide, setSelectedSide] = useState<"yes" | "no" | null>(null);
+  const [confidence, setConfidence] = useState(60);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Fixed stake of 100 (as per Calibr protocol)
+  const stake = 100;
+  const risk = calculateRisk(confidence);
+  const potentialLoss = risk;
+  const protectedAmount = stake - risk;
+
+  const handleSideSelect = (side: "yes" | "no") => {
+    setSelectedSide(side);
+    toast.info(`Selected ${side.toUpperCase()}`, {
+      description: "Now choose your confidence level",
+      duration: 2000,
+    });
   };
 
-  const stake = parseFloat(stakeAmount) || 0;
-  const riskAmount = calculateRisk(confidence, stake);
-  const costPerShare = (confidence / 100).toFixed(2);
+  const handleReview = () => {
+    if (!selectedSide) {
+      toast.error("Please select YES or NO first");
+      return;
+    }
+    setShowConfirmation(true);
+  };
+
+  const handleConfirm = async () => {
+    setIsSubmitting(true);
+    
+    // TODO: Actual contract call will go here
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    toast.success("Prediction placed!", {
+      description: `${selectedSide?.toUpperCase()} at ${confidence}% confidence`,
+      duration: 4000,
+    });
+    
+    setShowConfirmation(false);
+    setIsSubmitting(false);
+    setSelectedSide(null);
+    setConfidence(60);
+  };
 
   return (
     <>
-      <div className="bg-card border border-border rounded-xl p-6 space-y-6">
-        <h3 className="text-lg font-medium">Make a Prediction</h3>
-
-        {/* YES/NO Toggle */}
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={() => setSelectedSide("yes")}
-            className={cn(
-              "py-4 px-6 rounded-xl font-medium text-lg transition-all",
-              selectedSide === "yes"
-                ? "bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2 ring-offset-background"
-                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-            )}
-          >
-            Yes
-          </button>
-          <button
-            onClick={() => setSelectedSide("no")}
-            className={cn(
-              "py-4 px-6 rounded-xl font-medium text-lg transition-all",
-              selectedSide === "no"
-                ? "bg-muted-foreground text-background ring-2 ring-muted-foreground ring-offset-2 ring-offset-background"
-                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-            )}
-          >
-            No
-          </button>
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
+        {/* Header */}
+        <div className="px-6 py-4 bg-muted/30 border-b border-border">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <h3 className="font-medium">Make a Prediction</h3>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Fixed stake: {stake} pts
+          </p>
         </div>
 
-        {selectedSide && (
-          <div className="animate-fade-in space-y-6 pt-4 border-t border-border">
-            {/* Confidence Slider with Tooltip */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Confidence Level</span>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Info className="h-4 w-4 text-muted-foreground" />
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <p>Confidence reflects how sure you are. Higher confidence increases both reward and penalty.</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <ConfidenceSlider
+        <div className="p-6 space-y-6">
+          {/* YES/NO Toggle */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => handleSideSelect("yes")}
+              className={cn(
+                "relative py-5 px-6 rounded-xl font-medium text-lg transition-all duration-300",
+                "flex flex-col items-center gap-2",
+                selectedSide === "yes"
+                  ? "bg-green-500 text-white ring-2 ring-green-500 ring-offset-2 ring-offset-background shadow-lg"
+                  : "bg-secondary text-secondary-foreground hover:bg-green-500/10 hover:text-green-600 hover:border-green-500/30 border border-transparent"
+              )}
+            >
+              <ThumbsUp className={cn(
+                "h-6 w-6 transition-transform",
+                selectedSide === "yes" && "scale-110"
+              )} />
+              <span>Yes</span>
+              {selectedSide === "yes" && (
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center">
+                  <div className="w-2 h-2 bg-green-500 rounded-full" />
+                </div>
+              )}
+            </button>
+            <button
+              onClick={() => handleSideSelect("no")}
+              className={cn(
+                "relative py-5 px-6 rounded-xl font-medium text-lg transition-all duration-300",
+                "flex flex-col items-center gap-2",
+                selectedSide === "no"
+                  ? "bg-red-500 text-white ring-2 ring-red-500 ring-offset-2 ring-offset-background shadow-lg"
+                  : "bg-secondary text-secondary-foreground hover:bg-red-500/10 hover:text-red-600 hover:border-red-500/30 border border-transparent"
+              )}
+            >
+              <ThumbsDown className={cn(
+                "h-6 w-6 transition-transform",
+                selectedSide === "no" && "scale-110"
+              )} />
+              <span>No</span>
+              {selectedSide === "no" && (
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center">
+                  <div className="w-2 h-2 bg-red-500 rounded-full" />
+                </div>
+              )}
+            </button>
+          </div>
+
+          {selectedSide && (
+            <div className="animate-fade-in space-y-6 pt-4 border-t border-border">
+              {/* Enhanced Confidence Slider */}
+              <ConfidenceSliderEnhanced
                 value={confidence}
                 onChange={setConfidence}
                 maxValue={maxConfidence}
               />
-            </div>
 
-            {/* Stake Input */}
-            <div className="space-y-3">
-              <label className="text-sm text-muted-foreground">Stake Amount</label>
-              <Input
-                type="number"
-                value={stakeAmount}
-                onChange={(e) => setStakeAmount(e.target.value)}
-                placeholder="Enter stake"
-                className="font-mono-numbers"
-                min="1"
-              />
-            </div>
+              {/* Payout Summary */}
+              <div className="bg-muted/30 rounded-xl p-4 space-y-3">
+                <div className="flex items-center gap-2 text-sm font-medium mb-3">
+                  <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                  <span>Potential Outcomes</span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-green-500/10 rounded-lg p-3 border border-green-500/20">
+                    <p className="text-xs text-green-600 dark:text-green-400 mb-1">If Correct</p>
+                    <p className="text-lg font-bold font-mono-numbers text-green-600 dark:text-green-400">
+                      +{risk} <span className="text-xs font-normal">+ share of pool</span>
+                    </p>
+                  </div>
+                  <div className="bg-red-500/10 rounded-lg p-3 border border-red-500/20">
+                    <p className="text-xs text-red-600 dark:text-red-400 mb-1">If Wrong</p>
+                    <p className="text-lg font-bold font-mono-numbers text-red-600 dark:text-red-400">
+                      -{potentialLoss}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Keep {protectedAmount} protected
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-            {/* Summary Box */}
-            <div className="bg-secondary/50 rounded-lg p-4 space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Position</span>
-                <span className="font-medium capitalize">{selectedSide}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Confidence</span>
-                <span className="font-medium font-mono-numbers">{confidence}%</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Cost per share</span>
-                <span className="font-medium font-mono-numbers">{costPerShare}</span>
-              </div>
-              <div className="flex justify-between text-sm pt-2 border-t border-border">
-                <span className="text-muted-foreground">Total at risk</span>
-                <span className="font-semibold font-mono-numbers text-primary">{riskAmount} pts</span>
-              </div>
-            </div>
+              {/* Submit Button */}
+              <Button
+                onClick={handleReview}
+                className="w-full gap-2"
+                size="lg"
+              >
+                <Sparkles className="h-4 w-4" />
+                Review Prediction
+              </Button>
 
-            <Button
-              onClick={() => setShowConfirmation(true)}
-              className="w-full"
-              size="lg"
-              disabled={stake <= 0}
-            >
-              Review Prediction
-            </Button>
-          </div>
-        )}
+              {/* Confidence Cap Warning */}
+              {maxConfidence < 90 && (
+                <p className="text-xs text-center text-muted-foreground">
+                  Your confidence is capped at {maxConfidence}% based on your reputation.
+                  <br />
+                  Build your track record to unlock higher confidence.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <ConfirmationModal
@@ -140,9 +188,11 @@ export function PredictionPanel({ marketId, question, maxConfidence = 85 }: Pred
         onClose={() => setShowConfirmation(false)}
         side={selectedSide || "yes"}
         confidence={confidence}
-        riskAmount={riskAmount}
+        riskAmount={risk}
         question={question}
         stakeAmount={stake}
+        onConfirm={handleConfirm}
+        isLoading={isSubmitting}
       />
     </>
   );

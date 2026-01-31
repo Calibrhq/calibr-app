@@ -1,7 +1,12 @@
+"use client";
+
 import { StatCard } from "@/components/dashboard/StatCard";
 import { PredictionRow } from "@/components/dashboard/PredictionRow";
 import { mockUserPredictions, userStats } from "@/data/mockMarkets";
-import { Target, Percent, Trophy, Award, TrendingUp, TrendingDown } from "lucide-react";
+import { NoActivePredictions, NoPredictions } from "@/components/ui/empty-state";
+import { Target, Percent, Trophy, Award, TrendingUp, TrendingDown, LayoutDashboard, Clock, CheckCircle } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function DashboardPage() {
   const activePredictions = mockUserPredictions.filter((p) => p.status === "active");
@@ -9,11 +14,25 @@ export default function DashboardPage() {
 
   return (
     <div className="container py-8 md:py-12">
-      <div className="mb-10">
-        <h1 className="mb-3">Dashboard</h1>
-        <p className="text-lg text-muted-foreground">
-          Track your predictions and performance.
-        </p>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-10">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 rounded-xl bg-primary/10">
+              <LayoutDashboard className="h-5 w-5 text-primary" />
+            </div>
+            <h1 className="mb-0">Dashboard</h1>
+          </div>
+          <p className="text-muted-foreground">
+            Track your predictions and performance.
+          </p>
+        </div>
+        <Link href="/explore">
+          <Button className="gap-2">
+            <Target className="h-4 w-4" />
+            New Prediction
+          </Button>
+        </Link>
       </div>
 
       {/* Stats Grid */}
@@ -54,8 +73,11 @@ export default function DashboardPage() {
         {/* Active Predictions */}
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-medium">Active Predictions</h2>
-            <span className="text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-muted-foreground" />
+              <h2 className="text-xl font-medium">Active Predictions</h2>
+            </div>
+            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary">
               {activePredictions.length} open
             </span>
           </div>
@@ -79,8 +101,8 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 bg-card border border-border rounded-xl">
-              <p className="text-muted-foreground">No active predictions yet.</p>
+            <div className="bg-card border border-border rounded-xl">
+              <NoActivePredictions />
             </div>
           )}
         </section>
@@ -88,8 +110,11 @@ export default function DashboardPage() {
         {/* Resolved Predictions */}
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-medium">Recently Resolved</h2>
-            <span className="text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-muted-foreground" />
+              <h2 className="text-xl font-medium">Recently Resolved</h2>
+            </div>
+            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-secondary text-secondary-foreground">
               {resolvedPredictions.length} resolved
             </span>
           </div>
@@ -117,8 +142,8 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 bg-card border border-border rounded-xl">
-              <p className="text-muted-foreground">No resolved predictions yet.</p>
+            <div className="bg-card border border-border rounded-xl">
+              <NoPredictions />
             </div>
           )}
         </section>
