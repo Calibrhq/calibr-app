@@ -58,8 +58,10 @@ export function InfoTooltip({
             }
 
             // Keep tooltip on screen
-            x = Math.max(8, Math.min(x, window.innerWidth - tooltip.width - 8));
-            y = Math.max(8, y);
+            if (typeof window !== "undefined") {
+                x = Math.max(8, Math.min(x, window.innerWidth - tooltip.width - 8));
+                y = Math.max(8, y);
+            }
 
             setCoords({ x, y });
         }

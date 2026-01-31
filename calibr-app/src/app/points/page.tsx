@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { useCurrentAccount } from "@mysten/dapp-kit-react";
+import { useWallet } from "@/hooks/useWallet";
 import {
     Coins,
     ArrowRight,
@@ -31,7 +31,7 @@ const BUY_PRESETS = [
 ];
 
 export default function BuyPointsPage() {
-    const account = useCurrentAccount();
+    const { isConnected } = useWallet();
     const [selectedPoints, setSelectedPoints] = useState(1000);
     const [customAmount, setCustomAmount] = useState("");
     const [isCustom, setIsCustom] = useState(false);
@@ -50,7 +50,7 @@ export default function BuyPointsPage() {
     const predictionsEnabled = Math.floor(pointsToBuy / 100);
 
     const handleBuyPoints = async () => {
-        if (!account) {
+        if (!isConnected) {
             alert("Please connect your wallet first");
             return;
         }
@@ -129,8 +129,8 @@ export default function BuyPointsPage() {
                                                 setIsCustom(false);
                                             }}
                                             className={`p-4 rounded-xl border-2 transition-all ${!isCustom && selectedPoints === preset.points
-                                                    ? "border-primary bg-primary/10"
-                                                    : "border-border hover:border-primary/50"
+                                                ? "border-primary bg-primary/10"
+                                                : "border-border hover:border-primary/50"
                                                 }`}
                                         >
                                             <div className="font-bold text-xl text-foreground">
@@ -148,8 +148,8 @@ export default function BuyPointsPage() {
                                     <button
                                         onClick={() => setIsCustom(true)}
                                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${isCustom
-                                                ? "bg-primary text-primary-foreground"
-                                                : "bg-muted text-muted-foreground hover:bg-primary/10"
+                                            ? "bg-primary text-primary-foreground"
+                                            : "bg-muted text-muted-foreground hover:bg-primary/10"
                                             }`}
                                     >
                                         Custom
@@ -215,10 +215,10 @@ export default function BuyPointsPage() {
                                 {/* Buy Button */}
                                 <button
                                     onClick={handleBuyPoints}
-                                    disabled={!account || pointsToBuy < POINTS_UNIT}
+                                    disabled={!isConnected || pointsToBuy < POINTS_UNIT}
                                     className="w-full mt-6 py-4 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground text-primary-foreground font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
                                 >
-                                    {!account ? (
+                                    {!isConnected ? (
                                         "Connect Wallet to Buy"
                                     ) : (
                                         <>
