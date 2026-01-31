@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggleCompact } from "@/components/ui/theme-toggle";
 import { WalletButton, WalletButtonCompact } from "@/components/wallet/WalletButton";
 import { useWallet } from "@/hooks/useWallet";
+import { usePointsBalance } from "@/hooks/usePointsBalance";
+
 
 const navItems = [
   { label: "Explore", href: "/explore" },
@@ -24,6 +26,13 @@ export function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { isConnected, reputation, tier } = useWallet();
+  const { data: pointsBalance } = usePointsBalance();
+
+  // Format points for display
+  const formatPoints = (points: number) => {
+    if (points >= 1000) return `${(points / 1000).toFixed(1)}K`;
+    return points.toString();
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
@@ -81,6 +90,20 @@ export function Header() {
         <div className="flex items-center gap-2">
           {/* Theme Toggle */}
           <ThemeToggleCompact />
+
+          {/* Points Balance Badge (when connected) */}
+          {isConnected && (
+            <Link
+              href="/points"
+              className="hidden sm:flex items-center justify-center h-10 gap-1.5 px-3 rounded-lg border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 text-xs transition-all duration-200"
+              title="Your Points Balance - Click to buy more"
+            >
+              <Coins className="h-4 w-4 text-amber-500 flex-shrink-0" />
+              <span className="font-semibold font-mono-numbers text-amber-600 dark:text-amber-400 tabular-nums leading-none">
+                {pointsBalance ? formatPoints(pointsBalance.balance) : "0"}
+              </span>
+            </Link>
+          )}
 
           {/* Reputation Badge (when connected) - same height as Connect Wallet button */}
           {isConnected && (
@@ -165,6 +188,20 @@ export function Header() {
             </Link>
 
             <div className="pt-4 border-t border-border mt-4 space-y-3 px-4">
+              {/* Points Balance - Mobile */}
+              {isConnected && (
+                <Link
+                  href="/points"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2 py-2 px-3 rounded-lg border border-amber-500/20 bg-amber-500/5 text-sm"
+                >
+                  <Coins className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
+                  <span className="font-semibold font-mono-numbers text-amber-600 dark:text-amber-400">
+                    {pointsBalance ? formatPoints(pointsBalance.balance) : "0"} pts
+                  </span>
+                </Link>
+              )}
+              {/* Reputation Badge - Mobile */}
               {isConnected && (
                 <Link
                   href="/profile"

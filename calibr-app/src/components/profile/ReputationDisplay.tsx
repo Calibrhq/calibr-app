@@ -7,12 +7,22 @@ import { Shield, Target, Award, Crown, Lock, Unlock, TrendingUp } from "lucide-r
 interface ReputationDisplayProps {
   score: number;
   maxConfidence: number;
-  tier: "novice" | "calibrated" | "expert" | "oracle";
+  tier: string;
 }
 
-const tierInfo = {
-  novice: { 
-    label: "New", 
+const tierInfo: Record<string, {
+  label: string;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  textColor: string;
+  icon: typeof Target;
+  description: string;
+  nextTier: string | null;
+  nextAt: number;
+}> = {
+  New: {
+    label: "New",
     color: "gray",
     bgColor: "bg-gray-500/10",
     borderColor: "border-gray-500/30",
@@ -22,8 +32,8 @@ const tierInfo = {
     nextTier: "Proven",
     nextAt: 700,
   },
-  calibrated: { 
-    label: "Proven", 
+  Proven: {
+    label: "Proven",
     color: "blue",
     bgColor: "bg-blue-500/10",
     borderColor: "border-blue-500/30",
@@ -33,25 +43,14 @@ const tierInfo = {
     nextTier: "Elite",
     nextAt: 850,
   },
-  expert: { 
-    label: "Elite", 
+  Elite: {
+    label: "Elite",
     color: "purple",
     bgColor: "bg-purple-500/10",
     borderColor: "border-purple-500/30",
     textColor: "text-purple-500",
     icon: Crown,
     description: "Exceptional forecaster",
-    nextTier: null,
-    nextAt: 1000,
-  },
-  oracle: { 
-    label: "Oracle", 
-    color: "amber",
-    bgColor: "bg-amber-500/10",
-    borderColor: "border-amber-500/30",
-    textColor: "text-amber-500",
-    icon: Crown,
-    description: "Legendary calibration",
     nextTier: null,
     nextAt: 1000,
   },
@@ -63,15 +62,18 @@ const confidenceTiers = [
   { rep: 850, cap: 90, label: "Elite" },
 ];
 
+// Default tier info fallback
+const defaultTierInfo = tierInfo.New;
+
 export function ReputationDisplay({ score, maxConfidence, tier }: ReputationDisplayProps) {
-  const info = tierInfo[tier];
+  const info = tierInfo[tier] || defaultTierInfo;
   const TierIcon = info.icon;
-  
+
   // Calculate progress to next tier
   const currentTierIndex = confidenceTiers.findIndex(t => t.cap === maxConfidence);
   const nextTier = confidenceTiers[currentTierIndex + 1];
   const prevTierRep = currentTierIndex > 0 ? confidenceTiers[currentTierIndex].rep : 0;
-  const progressToNext = nextTier 
+  const progressToNext = nextTier
     ? ((score - prevTierRep) / (nextTier.rep - prevTierRep)) * 100
     : 100;
 
@@ -83,18 +85,18 @@ export function ReputationDisplay({ score, maxConfidence, tier }: ReputationDisp
           {/* Glow effect */}
           <div className={cn(
             "absolute inset-0 rounded-full blur-xl opacity-30",
-            tier === "expert" || tier === "oracle" ? "bg-purple-500" : "bg-primary"
+            tier === "Elite" ? "bg-purple-500" : "bg-primary"
           )} />
-          
+
           {/* Score Ring */}
-          <AnimatedScore 
-            value={score} 
+          <AnimatedScore
+            value={score}
             maxValue={1000}
             size={160}
             strokeWidth={10}
           />
         </div>
-        
+
         <p className="text-sm text-muted-foreground mt-4">Reputation Score</p>
       </div>
 
@@ -126,14 +128,14 @@ export function ReputationDisplay({ score, maxConfidence, tier }: ReputationDisp
             </span>
           </div>
         </div>
-        
+
         <div className="p-5 space-y-4">
           {/* Tier Progress */}
           <div className="space-y-3">
             {confidenceTiers.map((t, i) => {
               const isUnlocked = score >= t.rep;
               const isCurrent = t.cap === maxConfidence;
-              
+
               return (
                 <div key={t.cap} className="flex items-center gap-3">
                   <div className={cn(
@@ -166,7 +168,7 @@ export function ReputationDisplay({ score, maxConfidence, tier }: ReputationDisp
               );
             })}
           </div>
-          
+
           {/* Progress to next tier */}
           {nextTier && (
             <div className="pt-4 border-t border-border space-y-2">
@@ -180,7 +182,7 @@ export function ReputationDisplay({ score, maxConfidence, tier }: ReputationDisp
                 </span>
               </div>
               <div className="h-2 rounded-full bg-muted overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-primary rounded-full transition-all duration-500"
                   style={{ width: `${Math.min(100, Math.max(0, progressToNext))}%` }}
                 />

@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { toast } from "sonner";
 import { useWallet } from "@/hooks/useWallet";
+import { usePointsBalance } from "@/hooks/usePointsBalance";
+import { Link } from "lucide-react"; // Wait, Link is from next/link usually. Lucide has LinkIcon.
+import NextLink from "next/link"; // Rename to avoid conflict if Lucide has Link
 import {
     Coins,
     ArrowRight,
@@ -13,14 +17,18 @@ import {
     AlertCircle,
     ChevronRight
 } from "lucide-react";
-import Link from "next/link";
 import { InfoTooltip, EducationalBanner } from "@/components/ui/InfoTooltip";
 import {
     POINTS_BASE_PRICE_MIST,
     POINTS_UNIT,
     mistToSui,
+    suiToMist,
     estimatePointsCost,
+    POINTS_ECONOMY_OBJECTS,
+    buildBuyPointsTx,
+    buildCreateBalanceAndBuyPointsTx
 } from "@/lib/points-transactions";
+import { DEFAULT_NETWORK } from "@/lib/sui-config";
 
 // Preset buy amounts
 const BUY_PRESETS = [
@@ -31,19 +39,22 @@ const BUY_PRESETS = [
 ];
 
 export default function BuyPointsPage() {
-    const { isConnected } = useWallet();
+    const { isConnected, signAndExecuteTransaction } = useWallet();
+    const { data: pointsBalance } = usePointsBalance();
+
     const [selectedPoints, setSelectedPoints] = useState(1000);
     const [customAmount, setCustomAmount] = useState("");
     const [isCustom, setIsCustom] = useState(false);
+    const [isBuying, setIsBuying] = useState(false);
 
     // Calculate cost
     const pointsToBuy = isCustom ? parseInt(customAmount) || 0 : selectedPoints;
-    const estimatedCost = useMemo(() => {
+    const estimatedCostMist = useMemo(() => {
         if (pointsToBuy < POINTS_UNIT || pointsToBuy % POINTS_UNIT !== 0) return 0;
         return estimatePointsCost(pointsToBuy);
     }, [pointsToBuy]);
 
-    const costInSui = mistToSui(estimatedCost);
+    const costInSui = mistToSui(estimatedCostMist);
     const pricePerPoint = costInSui / (pointsToBuy || 1);
 
     // How many predictions this enables
@@ -51,12 +62,70 @@ export default function BuyPointsPage() {
 
     const handleBuyPoints = async () => {
         if (!isConnected) {
-            alert("Please connect your wallet first");
+            toast.error("Please connect your wallet first");
             return;
         }
 
-        // TODO: Implement actual buy transaction after contract deployment
-        alert(`Coming soon! This will purchase ${pointsToBuy} points for ~${costInSui.toFixed(4)} SUI`);
+        if (pointsToBuy < POINTS_UNIT || pointsToBuy % POINTS_UNIT !== 0) {
+            toast.error(`Points must be purchased in multiples of ${POINTS_UNIT}`);
+            return;
+        }
+
+        try {
+            setIsBuying(true);
+            const economyIds = POINTS_ECONOMY_OBJECTS[DEFAULT_NETWORK as keyof typeof POINTS_ECONOMY_OBJECTS];
+
+            if (!economyIds.treasury || !economyIds.marketConfig) {
+                toast.error("Contract configuration missing for this network");
+                setIsBuying(false);
+                return;
+            }
+
+            console.log("Preparing transaction...", { pointsToBuy, estimatedCostMist });
+
+            let tx;
+            if (pointsBalance) {
+                // User has balance, simple buy
+                tx = buildBuyPointsTx(
+                    economyIds.treasury,
+                    economyIds.marketConfig,
+                    pointsBalance.id,
+                    estimatedCostMist,
+                    pointsToBuy
+                );
+            } else {
+                // Create balance and buy
+                if (!economyIds.balanceRegistry) {
+                    toast.error("Balance Registry ID missing");
+                    setIsBuying(false);
+                    return;
+                }
+                tx = buildCreateBalanceAndBuyPointsTx(
+                    economyIds.treasury,
+                    economyIds.marketConfig,
+                    economyIds.balanceRegistry,
+                    estimatedCostMist,
+                    pointsToBuy
+                );
+            }
+
+            const result = await signAndExecuteTransaction(tx);
+
+            if (result && result.digest) {
+                toast.success(`Successfully purchased ${pointsToBuy} points!`);
+                // Note: Balance update might take a moment. 
+                // usePointsBalance hook auto-refetches, but we could invalidate query if we had access to queryClient.
+            } else {
+                // User rejected or failed
+                // Toast handled by useWallet usually? or strictly here?
+                // If result is null, it usually failed.
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Transaction failed");
+        } finally {
+            setIsBuying(false);
+        }
     };
 
     return (
@@ -66,7 +135,7 @@ export default function BuyPointsPage() {
                 <div className="container mx-auto px-4 py-12">
                     <div className="max-w-2xl">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-                            <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
+                            <NextLink href="/" className="hover:text-foreground transition-colors">Home</NextLink>
                             <ChevronRight className="w-4 h-4" />
                             <span className="text-foreground">Buy Points</span>
                         </div>
@@ -92,7 +161,7 @@ export default function BuyPointsPage() {
                             <span>
                                 Points represent your &quot;judgment capacity&quot; in Calibr. Each prediction costs 100 points.
                                 You earn more back when you predict correctly — your skill determines your returns, not your
-                                capital. <Link href="/how-it-works" className="text-primary hover:underline">Learn more →</Link>
+                                capital. <NextLink href="/how-it-works" className="text-primary hover:underline">Learn more →</NextLink>
                             </span>
                         }
                     />
@@ -215,11 +284,13 @@ export default function BuyPointsPage() {
                                 {/* Buy Button */}
                                 <button
                                     onClick={handleBuyPoints}
-                                    disabled={!isConnected || pointsToBuy < POINTS_UNIT}
+                                    disabled={!isConnected || pointsToBuy < POINTS_UNIT || isBuying}
                                     className="w-full mt-6 py-4 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground text-primary-foreground font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
                                 >
                                     {!isConnected ? (
                                         "Connect Wallet to Buy"
+                                    ) : isBuying ? (
+                                        "Processing..."
                                     ) : (
                                         <>
                                             Buy {pointsToBuy.toLocaleString()} Points
