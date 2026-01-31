@@ -34,11 +34,12 @@ export function useMarkets(category?: string) {
         queryKey: ["markets", DEFAULT_NETWORK, category],
         queryFn: async (): Promise<Market[]> => {
             // 1. Fetch MarketCreated events
-            const eventsResult = await rpc("suix_queryEvents", [{
-                query: { MoveEvent: `${packageId}::events::MarketCreated` },
-                limit: 50,
-                order: "Descending"
-            }]);
+            const eventsResult = await rpc("suix_queryEvents", [
+                { MoveEventType: `${packageId}::events::MarketCreated` },
+                null, // cursor
+                50,   // limit
+                true  // descending
+            ]);
 
             if (!eventsResult || !eventsResult.data || eventsResult.data.length === 0) {
                 return [];

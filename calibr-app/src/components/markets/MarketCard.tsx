@@ -34,7 +34,10 @@ export function MarketCard({
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return null;
-    return format(new Date(dateStr), "MMM d, yyyy");
+    const date = new Date(dateStr);
+    // If invalid date (e.g. "Open"), return raw string
+    if (isNaN(date.getTime())) return dateStr;
+    return format(date, "MMM d, yyyy");
   };
 
   return (
@@ -47,7 +50,7 @@ export function MarketCard({
       )}>
         {/* Gradient overlay on hover */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-        
+
         <div className="relative">
           <div className="flex items-start justify-between gap-4 mb-4">
             <div className="flex items-center gap-2 flex-wrap">
@@ -126,7 +129,7 @@ export function MarketCard({
                   </span>
                 )}
               </div>
-              
+
               {/* View indicator */}
               <span className="flex items-center gap-0.5 text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
                 Predict

@@ -1,0 +1,275 @@
+INCLUDING DEPENDENCY MoveStdlib
+INCLUDING DEPENDENCY Sui
+BUILDING calibr
+{
+  "digest": "Df5Bh7WFCKkCaLVQp5EugACV2BuNjKbVK2ZhSf77F5AQ",
+  "transaction": {
+    "data": {
+      "messageVersion": "v1",
+      "transaction": {
+        "kind": "ProgrammableTransaction",
+        "inputs": [
+          {
+            "type": "pure",
+            "valueType": "address",
+            "value": "0x7004d786d7e915175164aab02c326faee62789083573c4772aea2afb9f6c44a2"
+          }
+        ],
+        "transactions": [
+          {
+            "Publish": [
+              "0x0000000000000000000000000000000000000000000000000000000000000001",
+              "0x0000000000000000000000000000000000000000000000000000000000000002"
+            ]
+          },
+          {
+            "TransferObjects": [
+              [
+                {
+                  "Result": 0
+                }
+              ],
+              {
+                "Input": 0
+              }
+            ]
+          }
+        ]
+      },
+      "sender": "0x7004d786d7e915175164aab02c326faee62789083573c4772aea2afb9f6c44a2",
+      "gasData": {
+        "payment": [
+          {
+            "objectId": "0x27a11d5bdeb0c2e497c9cbbe01c8dd90742df956463a788e40fd3f6456ad0b26",
+            "version": 349181275,
+            "digest": "CAqfjrm13iEhaMPaW2mBmFX5pFzZhExcz1Z5GTXB74AH"
+          }
+        ],
+        "owner": "0x7004d786d7e915175164aab02c326faee62789083573c4772aea2afb9f6c44a2",
+        "price": "1000",
+        "budget": "1000000000"
+      }
+    },
+    "txSignatures": [
+      "ABCn4r3y3CQvMjTNz3EixS+m4iq0mDMH+yy/HTB4/OYXA8tuLjA4eQpb4vHtUt2CHPV/lXQ4O+/KttEghfobzgyPdwdQGVNPAcHSTn5sr5oT9sDn46sjq2ONwAa0jPnprw=="
+    ]
+  },
+  "effects": {
+    "messageVersion": "v1",
+    "status": {
+      "status": "success"
+    },
+    "executedEpoch": "996",
+    "gasUsed": {
+      "computationCost": "1590000",
+      "storageCost": "168811200",
+      "storageRebate": "978120",
+      "nonRefundableStorageFee": "9880"
+    },
+    "modifiedAtVersions": [
+      {
+        "objectId": "0x27a11d5bdeb0c2e497c9cbbe01c8dd90742df956463a788e40fd3f6456ad0b26",
+        "sequenceNumber": "349181275"
+      }
+    ],
+    "transactionDigest": "Df5Bh7WFCKkCaLVQp5EugACV2BuNjKbVK2ZhSf77F5AQ",
+    "created": [
+      {
+        "owner": {
+          "Shared": {
+            "initial_shared_version": 349181276
+          }
+        },
+        "reference": {
+          "objectId": "0x1aabc8902e78648fd61d1dae77dd3a762a84615ed6fa1f88b1f14b5a1a3ae837",
+          "version": 349181276,
+          "digest": "Ed3vr1mFxYJEFgCoKtkZkPoW6HUczTkadCsQskcnuQbL"
+        }
+      },
+      {
+        "owner": {
+          "AddressOwner": "0x7004d786d7e915175164aab02c326faee62789083573c4772aea2afb9f6c44a2"
+        },
+        "reference": {
+          "objectId": "0x300de0425c7058df9df20161e29a81a92d3586ee46bc3455d90cec04a82f8fdc",
+          "version": 349181276,
+          "digest": "CDabwTkHASNLmk4NYn9H4a7eUd1UZQXtKyXxgAapkkcZ"
+        }
+      },
+      {
+        "owner": {
+          "AddressOwner": "0x7004d786d7e915175164aab02c326faee62789083573c4772aea2afb9f6c44a2"
+        },
+        "reference": {
+          "objectId": "0x43c523b0f824abf2b0104a65ae0aa349fdf776455341e109594cc6800edd87a3",
+          "version": 349181276,
+          "digest": "EbTPVkRntxzaMoRCKRGSjUBzAaqmiH8GN76pY2uDTbhV"
+        }
+      },
+      {
+        "owner": "Immutable",
+        "reference": {
+          "objectId": "0x4c049202f74d232369834eb0590a572a9235e59bd9a17ff6ce52a10b3eff071e",
+          "version": 1,
+          "digest": "CqJBtCsiBbD56yEfMsMMxnTgEhoiAKdwZM54dz7UsEnk"
+        }
+      },
+      {
+        "owner": {
+          "Shared": {
+            "initial_shared_version": 349181276
+          }
+        },
+        "reference": {
+          "objectId": "0x9a8afaabb366e3efffba7b5a0565bdf86d224c24b255c129acc3be7ee9febcac",
+          "version": 349181276,
+          "digest": "ENqBNgAR1x5d9zEBfCswN55myg6yapyn1QvQbm5sbHqj"
+        }
+      },
+      {
+        "owner": {
+          "Shared": {
+            "initial_shared_version": 349181276
+          }
+        },
+        "reference": {
+          "objectId": "0xa759101831a5e08e1ab3a8771f6c94dd1d1c9cfb9608a771b6036c0b2928157c",
+          "version": 349181276,
+          "digest": "GhKWVCMBuADXzT4dB9eLNZLhUsjVZDjcHw2NNH7SE42j"
+        }
+      }
+    ],
+    "mutated": [
+      {
+        "owner": {
+          "AddressOwner": "0x7004d786d7e915175164aab02c326faee62789083573c4772aea2afb9f6c44a2"
+        },
+        "reference": {
+          "objectId": "0x27a11d5bdeb0c2e497c9cbbe01c8dd90742df956463a788e40fd3f6456ad0b26",
+          "version": 349181276,
+          "digest": "AoRctCqakrC3cgPv7iwQPmv5zntD8pmfrszyZDwyHP1f"
+        }
+      }
+    ],
+    "gasObject": {
+      "owner": {
+        "AddressOwner": "0x7004d786d7e915175164aab02c326faee62789083573c4772aea2afb9f6c44a2"
+      },
+      "reference": {
+        "objectId": "0x27a11d5bdeb0c2e497c9cbbe01c8dd90742df956463a788e40fd3f6456ad0b26",
+        "version": 349181276,
+        "digest": "AoRctCqakrC3cgPv7iwQPmv5zntD8pmfrszyZDwyHP1f"
+      }
+    },
+    "dependencies": [
+      "7yV4UcBNfqVkZDiQWsD2zrFkj56iCCzcNUVUCYu2U8LB",
+      "B5W8jPYhhxoLZswrEnZ6z6HUog9jwHciKTt3NEbE5p73"
+    ]
+  },
+  "events": [],
+  "objectChanges": [
+    {
+      "type": "mutated",
+      "sender": "0x7004d786d7e915175164aab02c326faee62789083573c4772aea2afb9f6c44a2",
+      "owner": {
+        "AddressOwner": "0x7004d786d7e915175164aab02c326faee62789083573c4772aea2afb9f6c44a2"
+      },
+      "objectType": "0x2::coin::Coin<0x2::sui::SUI>",
+      "objectId": "0x27a11d5bdeb0c2e497c9cbbe01c8dd90742df956463a788e40fd3f6456ad0b26",
+      "version": "349181276",
+      "previousVersion": "349181275",
+      "digest": "AoRctCqakrC3cgPv7iwQPmv5zntD8pmfrszyZDwyHP1f"
+    },
+    {
+      "type": "created",
+      "sender": "0x7004d786d7e915175164aab02c326faee62789083573c4772aea2afb9f6c44a2",
+      "owner": {
+        "Shared": {
+          "initial_shared_version": 349181276
+        }
+      },
+      "objectType": "0x4c049202f74d232369834eb0590a572a9235e59bd9a17ff6ce52a10b3eff071e::points_market::BalanceRegistry",
+      "objectId": "0x1aabc8902e78648fd61d1dae77dd3a762a84615ed6fa1f88b1f14b5a1a3ae837",
+      "version": "349181276",
+      "digest": "Ed3vr1mFxYJEFgCoKtkZkPoW6HUczTkadCsQskcnuQbL"
+    },
+    {
+      "type": "created",
+      "sender": "0x7004d786d7e915175164aab02c326faee62789083573c4772aea2afb9f6c44a2",
+      "owner": {
+        "AddressOwner": "0x7004d786d7e915175164aab02c326faee62789083573c4772aea2afb9f6c44a2"
+      },
+      "objectType": "0x2::package::UpgradeCap",
+      "objectId": "0x300de0425c7058df9df20161e29a81a92d3586ee46bc3455d90cec04a82f8fdc",
+      "version": "349181276",
+      "digest": "CDabwTkHASNLmk4NYn9H4a7eUd1UZQXtKyXxgAapkkcZ"
+    },
+    {
+      "type": "created",
+      "sender": "0x7004d786d7e915175164aab02c326faee62789083573c4772aea2afb9f6c44a2",
+      "owner": {
+        "AddressOwner": "0x7004d786d7e915175164aab02c326faee62789083573c4772aea2afb9f6c44a2"
+      },
+      "objectType": "0x4c049202f74d232369834eb0590a572a9235e59bd9a17ff6ce52a10b3eff071e::market::AdminCap",
+      "objectId": "0x43c523b0f824abf2b0104a65ae0aa349fdf776455341e109594cc6800edd87a3",
+      "version": "349181276",
+      "digest": "EbTPVkRntxzaMoRCKRGSjUBzAaqmiH8GN76pY2uDTbhV"
+    },
+    {
+      "type": "published",
+      "packageId": "0x4c049202f74d232369834eb0590a572a9235e59bd9a17ff6ce52a10b3eff071e",
+      "version": "1",
+      "digest": "CqJBtCsiBbD56yEfMsMMxnTgEhoiAKdwZM54dz7UsEnk",
+      "modules": [
+        "calibr",
+        "events",
+        "market",
+        "math",
+        "points_market",
+        "points_token",
+        "prediction",
+        "redemption",
+        "reputation",
+        "treasury"
+      ]
+    },
+    {
+      "type": "created",
+      "sender": "0x7004d786d7e915175164aab02c326faee62789083573c4772aea2afb9f6c44a2",
+      "owner": {
+        "Shared": {
+          "initial_shared_version": 349181276
+        }
+      },
+      "objectType": "0x4c049202f74d232369834eb0590a572a9235e59bd9a17ff6ce52a10b3eff071e::treasury::Treasury",
+      "objectId": "0x9a8afaabb366e3efffba7b5a0565bdf86d224c24b255c129acc3be7ee9febcac",
+      "version": "349181276",
+      "digest": "ENqBNgAR1x5d9zEBfCswN55myg6yapyn1QvQbm5sbHqj"
+    },
+    {
+      "type": "created",
+      "sender": "0x7004d786d7e915175164aab02c326faee62789083573c4772aea2afb9f6c44a2",
+      "owner": {
+        "Shared": {
+          "initial_shared_version": 349181276
+        }
+      },
+      "objectType": "0x4c049202f74d232369834eb0590a572a9235e59bd9a17ff6ce52a10b3eff071e::points_market::PointsMarketConfig",
+      "objectId": "0xa759101831a5e08e1ab3a8771f6c94dd1d1c9cfb9608a771b6036c0b2928157c",
+      "version": "349181276",
+      "digest": "GhKWVCMBuADXzT4dB9eLNZLhUsjVZDjcHw2NNH7SE42j"
+    }
+  ],
+  "balanceChanges": [
+    {
+      "owner": {
+        "AddressOwner": "0x7004d786d7e915175164aab02c326faee62789083573c4772aea2afb9f6c44a2"
+      },
+      "coinType": "0x2::sui::SUI",
+      "amount": "-169423080"
+    }
+  ],
+  "timestampMs": "1769874009712",
+  "confirmedLocalExecution": true,
+  "checkpoint": "292199659"
+}
