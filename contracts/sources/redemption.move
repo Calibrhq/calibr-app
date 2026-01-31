@@ -42,23 +42,26 @@ module calibr::redemption {
     use calibr::events;
     
     // ============================================================
-    // CONSTANTS
+    // CONSTANTS (Relaxed for demo/hackathon)
     // ============================================================
     
-    /// Minimum reputation score required for redemption (Proven tier)
-    const MIN_REPUTATION: u64 = 800;
+    /// Minimum reputation score required for redemption
+    /// NOTE: Set to 0 for demo. Production should use 800 (Proven tier)
+    const MIN_REPUTATION: u64 = 0;
     
     /// Minimum number of settled predictions required
-    const MIN_PREDICTIONS: u64 = 20;
+    /// NOTE: Set to 1 for demo. Production should use 20
+    const MIN_PREDICTIONS: u64 = 1;
     
-    /// Minimum epochs since first deposit (roughly 4 weeks)
-    const MIN_EPOCHS_HELD: u64 = 4;
+    /// Minimum epochs since first deposit
+    /// NOTE: Set to 0 for demo. Production should use 4 (~4 weeks)
+    const MIN_EPOCHS_HELD: u64 = 0;
     
-    /// Maximum redemption per week: 10% of balance
-    const MAX_WEEKLY_REDEMPTION_PCT: u64 = 10;
+    /// Maximum redemption per week: 50% of balance
+    const MAX_WEEKLY_REDEMPTION_PCT: u64 = 50;
     
-    /// Total redemption fee: 5%
-    const REDEMPTION_FEE_PCT: u64 = 5;
+    /// Total redemption fee: 2%
+    const REDEMPTION_FEE_PCT: u64 = 2;
     
     /// Fee burned: 50% of fee (2.5% of total)
     const FEE_BURN_PCT: u64 = 50;

@@ -43,7 +43,7 @@ const BUY_PRESETS = [
 ];
 
 export default function PointsPage() {
-    const { isConnected, signAndExecuteTransaction, reputation, profileId } = useWallet();
+    const { isConnected, signAndExecuteTransaction, reputation, userProfile } = useWallet();
     const { data: pointsBalance, isLoading: isLoadingBalance } = usePointsBalance();
 
     // Tab state
@@ -154,7 +154,7 @@ export default function PointsPage() {
             return;
         }
 
-        if (!profileId) {
+        if (!userProfile?.id) {
             toast.error("No profile found");
             return;
         }
@@ -180,7 +180,7 @@ export default function PointsPage() {
             }
 
             const tx = buildRedeemPointsTx(
-                profileId,
+                userProfile.id,
                 pointsBalance.id,
                 economyIds.treasury,
                 economyIds.marketConfig,
@@ -263,8 +263,8 @@ export default function PointsPage() {
                         <button
                             onClick={() => setActiveTab("buy")}
                             className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all ${activeTab === "buy"
-                                    ? "bg-primary text-primary-foreground"
-                                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted text-muted-foreground hover:bg-muted/80"
                                 }`}
                         >
                             <Wallet className="w-4 h-4 inline-block mr-2" />
@@ -273,8 +273,8 @@ export default function PointsPage() {
                         <button
                             onClick={() => setActiveTab("sell")}
                             className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all ${activeTab === "sell"
-                                    ? "bg-primary text-primary-foreground"
-                                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted text-muted-foreground hover:bg-muted/80"
                                 }`}
                         >
                             <ArrowDownUp className="w-4 h-4 inline-block mr-2" />
@@ -303,8 +303,8 @@ export default function PointsPage() {
                                                     setIsCustom(false);
                                                 }}
                                                 className={`p-4 rounded-xl border-2 transition-all ${!isCustom && selectedPoints === preset.points
-                                                        ? "border-primary bg-primary/10"
-                                                        : "border-border hover:border-primary/50"
+                                                    ? "border-primary bg-primary/10"
+                                                    : "border-border hover:border-primary/50"
                                                     }`}
                                             >
                                                 <div className="font-bold text-xl text-foreground">
@@ -321,8 +321,8 @@ export default function PointsPage() {
                                         <button
                                             onClick={() => setIsCustom(true)}
                                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${isCustom
-                                                    ? "bg-primary text-primary-foreground"
-                                                    : "bg-muted text-muted-foreground hover:bg-primary/10"
+                                                ? "bg-primary text-primary-foreground"
+                                                : "bg-muted text-muted-foreground hover:bg-primary/10"
                                                 }`}
                                         >
                                             Custom
@@ -434,54 +434,8 @@ export default function PointsPage() {
                     ) : (
                         /* SELL TAB */
                         <div className="grid md:grid-cols-5 gap-8">
+                            {/* Left: Sell Form Only */}
                             <div className="md:col-span-3 space-y-6">
-                                {/* Eligibility Check */}
-                                <div className="bg-card border border-border rounded-2xl p-6">
-                                    <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                                        <Shield className="w-5 h-5 text-primary" />
-                                        Redemption Requirements
-                                    </h2>
-
-                                    <div className="space-y-3">
-                                        <div className={`flex items-center gap-3 p-3 rounded-lg ${meetsReputationReq ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
-                                            {meetsReputationReq ? (
-                                                <CheckCircle className="w-5 h-5 text-green-500" />
-                                            ) : (
-                                                <AlertTriangle className="w-5 h-5 text-red-500" />
-                                            )}
-                                            <div className="flex-1">
-                                                <p className="text-sm font-medium">Reputation ≥ 800</p>
-                                                <p className="text-xs text-muted-foreground">Your current: {reputation}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-500/10">
-                                            <AlertCircle className="w-5 h-5 text-yellow-500" />
-                                            <div className="flex-1">
-                                                <p className="text-sm font-medium">20+ Settled Predictions</p>
-                                                <p className="text-xs text-muted-foreground">Checked on-chain</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-500/10">
-                                            <Lock className="w-5 h-5 text-yellow-500" />
-                                            <div className="flex-1">
-                                                <p className="text-sm font-medium">Points held ≥ 4 epochs (~4 weeks)</p>
-                                                <p className="text-xs text-muted-foreground">Checked on-chain</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted">
-                                            <TrendingUp className="w-5 h-5 text-muted-foreground" />
-                                            <div className="flex-1">
-                                                <p className="text-sm font-medium">Weekly limit: 10% of balance</p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    Max this week: ~{maxRedeemable.toLocaleString()} points
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
 
                                 {/* Sell Amount */}
                                 <div className="bg-card border border-border rounded-2xl p-6">
@@ -569,62 +523,41 @@ export default function PointsPage() {
                                 </div>
                             </div>
 
-                            {/* Right sidebar - Sell info */}
+                            {/* Right sidebar - Redemption Requirements */}
                             <div className="md:col-span-2 space-y-4">
-                                <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-5">
-                                    <h3 className="font-semibold text-base mb-3 flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                                        <AlertTriangle className="w-4 h-4" />
-                                        Why Requirements?
+                                <div className="bg-card border border-border rounded-2xl p-5">
+                                    <h3 className="font-semibold text-base mb-3 flex items-center gap-2">
+                                        <Shield className="w-4 h-4 text-primary" />
+                                        Requirements
                                     </h3>
-                                    <p className="text-sm text-muted-foreground mb-3">
-                                        Redemption is restricted to prevent gaming:
-                                    </p>
-                                    <ul className="space-y-2 text-sm text-muted-foreground">
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-amber-500">•</span>
-                                            <span><strong>Reputation</strong> ensures skilled players</span>
-                                        </li>
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-amber-500">•</span>
-                                            <span><strong>Time lock</strong> prevents quick flips</span>
-                                        </li>
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-amber-500">•</span>
-                                            <span><strong>Weekly cap</strong> prevents bank runs</span>
-                                        </li>
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-amber-500">•</span>
-                                            <span><strong>5% fee</strong> discourages arbitrage</span>
-                                        </li>
-                                    </ul>
+                                    <div className="space-y-2">
+                                        <div className={`flex items-center gap-2 p-2 rounded-lg text-sm ${meetsReputationReq ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+                                            {meetsReputationReq ? (
+                                                <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                            ) : (
+                                                <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                                            )}
+                                            <span>Rep ≥ {REDEMPTION_REQUIREMENTS.minReputation} (yours: {reputation})</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 p-2 rounded-lg text-sm bg-green-500/10">
+                                            <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                            <span>{REDEMPTION_REQUIREMENTS.minPredictions}+ predictions</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 p-2 rounded-lg text-sm bg-green-500/10">
+                                            <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                            <span>{REDEMPTION_REQUIREMENTS.minEpochsHeld} epochs hold</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 p-2 rounded-lg text-sm bg-muted">
+                                            <TrendingUp className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                            <span>{REDEMPTION_REQUIREMENTS.maxWeeklyPct}% weekly limit • 5% fee</span>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div className="bg-card border border-border rounded-2xl p-5">
-                                    <h3 className="font-semibold text-base mb-3">
-                                        Redemption Summary
-                                    </h3>
-                                    <ul className="space-y-2 text-sm text-muted-foreground">
-                                        <li className="flex justify-between">
-                                            <span>Min rep</span>
-                                            <span className="font-mono">800</span>
-                                        </li>
-                                        <li className="flex justify-between">
-                                            <span>Min predictions</span>
-                                            <span className="font-mono">20</span>
-                                        </li>
-                                        <li className="flex justify-between">
-                                            <span>Hold period</span>
-                                            <span className="font-mono">~4 weeks</span>
-                                        </li>
-                                        <li className="flex justify-between">
-                                            <span>Weekly limit</span>
-                                            <span className="font-mono">10%</span>
-                                        </li>
-                                        <li className="flex justify-between">
-                                            <span>Fee</span>
-                                            <span className="font-mono">5%</span>
-                                        </li>
-                                    </ul>
+                                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
+                                    <p className="text-sm text-muted-foreground">
+                                        <strong className="text-amber-600 dark:text-amber-400">Why?</strong> Ensures only skilled predictors can cash out, prevents gaming.
+                                    </p>
                                 </div>
                             </div>
                         </div>
