@@ -2,20 +2,23 @@
 
 import { StatCard } from "@/components/dashboard/StatCard";
 import { NoActivePredictions, NoPredictions } from "@/components/ui/empty-state";
-import { Target, Percent, Trophy, TrendingUp, LayoutDashboard, Clock, CheckCircle, Coins, Loader2 } from "lucide-react";
+import { Target, Percent, Trophy, TrendingUp, LayoutDashboard, Clock, CheckCircle, Coins, Loader2, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/hooks/useWallet";
 import { usePointsBalance } from "@/hooks/usePointsBalance";
 import { useUserPredictions } from "@/hooks/useUserPredictions";
 import { useMarkets } from "@/hooks/useMarkets";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { buildSettlePredictionTx, buildClaimAllTx } from "@/lib/calibr-transactions";
+import { toast } from "sonner";
 
 export default function DashboardPage() {
-  const { isConnected, reputation, tier, address } = useWallet();
+  const { isConnected, reputation, tier, address, userProfile, signAndExecute } = useWallet();
   const { data: pointsBalance, isLoading: isLoadingPoints } = usePointsBalance();
-  const { data: predictions, isLoading: isLoadingPredictions } = useUserPredictions();
+  const { data: predictions, isLoading: isLoadingPredictions, refetch: refetchPredictions } = useUserPredictions();
   const { data: markets } = useMarkets();
+  const [isClaiming, setIsClaiming] = useState(false);
 
   // Calculate stats from real data
   const stats = useMemo(() => {
@@ -54,14 +57,71 @@ export default function DashboardPage() {
     };
   }, [predictions]);
 
-  // Get market questions for predictions
-  const getMarketQuestion = (marketId: string): string => {
-    const market = markets?.find(m => m.id === marketId);
-    return market?.question || `Market ${marketId.slice(0, 8)}...`;
-  };
+  // Get market for a prediction
+  const getMarket = (marketId: string) => markets?.find(m => m.id === marketId);
+
+  // Identify predictions that can be claimed (Market Resolved + Prediction Active)
+  const claimablePredictions = useMemo(() => {
+    if (!predictions || !markets) return [];
+    return predictions.filter(p => {
+      const market = markets.find(m => m.id === p.marketId);
+      return p.status === "active" && market?.status === "resolved";
+    });
+  }, [predictions, markets]);
 
   const activePredictions = predictions?.filter(p => p.status === "active") || [];
   const resolvedPredictions = predictions?.filter(p => p.status !== "active") || [];
+
+  // --- Handlers ---
+
+  const handleClaim = async (prediction: any) => {
+    if (!userProfile) return;
+    try {
+      const market = getMarket(prediction.marketId);
+      if (!market) return;
+
+      setIsClaiming(true);
+      const tx = buildSettlePredictionTx(userProfile.id, prediction.predictionId, market.id);
+
+      await signAndExecute(tx, {
+        onSuccess: () => {
+          toast.success("Winnings claimed successfully! Points added.");
+          refetchPredictions();
+        },
+        onError: (err) => toast.error("Failed to claim winnings")
+      });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsClaiming(false);
+    }
+  };
+
+  const handleClaimAll = async () => {
+    if (!userProfile) return;
+    try {
+      setIsClaiming(true);
+      const claims = claimablePredictions.map(p => ({
+        profileId: userProfile.id,
+        predictionId: p.predictionId,
+        marketId: p.marketId
+      }));
+
+      const tx = buildClaimAllTx(claims);
+
+      await signAndExecute(tx, {
+        onSuccess: () => {
+          toast.success(`Claimed ${claims.length} predictions! Points added.`);
+          refetchPredictions();
+        },
+        onError: (err) => toast.error("Failed to claim all winnings")
+      });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsClaiming(false);
+    }
+  };
 
   // Not connected state
   if (!isConnected) {
@@ -109,6 +169,33 @@ export default function DashboardPage() {
         </div>
       ) : (
         <>
+          {/* Claim All Banner */}
+          {claimablePredictions.length > 0 && (
+            <div className="bg-gradient-to-r from-yellow-500/10 to-amber-500/10 border border-amber-500/20 rounded-xl p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-amber-500/20 rounded-full text-amber-600">
+                  <Sparkles className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg text-amber-900 dark:text-amber-100">
+                    You have {claimablePredictions.length} winning predictions!
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Market resolutions are in. Claim your points and burn the losses.
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={handleClaimAll}
+                disabled={isClaiming}
+                className="w-full md:w-auto bg-amber-600 hover:bg-amber-700 text-white shadow-lg gap-2"
+              >
+                {isClaiming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Coins className="w-4 h-4" />}
+                Claim All ({claimablePredictions.length})
+              </Button>
+            </div>
+          )}
+
           {/* Stats Grid */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 mb-12">
             <StatCard
@@ -154,34 +241,55 @@ export default function DashboardPage() {
               </div>
               {activePredictions.length > 0 ? (
                 <div className="space-y-3">
-                  {activePredictions.map((prediction, index) => (
-                    <Link
-                      key={prediction.predictionId}
-                      href={`/market/${prediction.marketId}`}
-                      className="block animate-fade-in"
-                      style={{ animationDelay: `${index * 50}ms` }}
-                    >
-                      <div className="bg-card border border-border rounded-xl p-4 hover:border-primary/30 transition-colors">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium text-sm mb-1">
-                              {getMarketQuestion(prediction.marketId)}
-                            </p>
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                              <span className={prediction.side ? "text-green-500" : "text-red-500"}>
-                                {prediction.side ? "YES" : "NO"}
-                              </span>
-                              <span>{prediction.confidence}% confidence</span>
-                              <span>{prediction.stake} pts staked</span>
+                  {activePredictions.map((prediction, index) => {
+                    const market = getMarket(prediction.marketId);
+                    const isClaimable = market?.status === "resolved";
+
+                    return (
+                      <div
+                        key={prediction.predictionId}
+                        className="block animate-fade-in"
+                        style={{ animationDelay: `${index * 50}ms` }}
+                      >
+                        <div className={`bg-card border rounded-xl p-4 transition-colors ${isClaimable ? "border-amber-500/50 shadow-sm" : "border-border"}`}>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <Link href={`/market/${prediction.marketId}`} className="hover:underline">
+                                <p className="font-medium text-sm mb-1">
+                                  {market?.question || `Market ${prediction.marketId.slice(0, 8)}...`}
+                                </p>
+                              </Link>
+                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                <span className={prediction.side ? "text-green-500" : "text-red-500"}>
+                                  {prediction.side ? "YES" : "NO"}
+                                </span>
+                                <span>{prediction.confidence}% confidence</span>
+                                <span>{prediction.stake} pts staked</span>
+                              </div>
                             </div>
+
+                            {isClaimable ? (
+                              <Button
+                                size="sm"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleClaim(prediction);
+                                }}
+                                disabled={isClaiming}
+                                className="bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border border-amber-500/20"
+                              >
+                                {isClaiming ? <Loader2 className="w-3 h-3 animate-spin" /> : "Claim Payout"}
+                              </Button>
+                            ) : (
+                              <span className="px-2 py-1 text-xs bg-muted text-muted-foreground rounded">
+                                Active
+                              </span>
+                            )}
                           </div>
-                          <span className="px-2 py-1 text-xs bg-amber-500/10 text-amber-500 rounded">
-                            Active
-                          </span>
                         </div>
                       </div>
-                    </Link>
-                  ))}
+                    )
+                  })}
                 </div>
               ) : (
                 <div className="bg-card border border-border rounded-xl">
@@ -214,7 +322,7 @@ export default function DashboardPage() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="font-medium text-sm mb-1">
-                              {getMarketQuestion(prediction.marketId)}
+                              {getMarket(prediction.marketId)?.question}
                             </p>
                             <div className="flex items-center gap-3 text-xs text-muted-foreground">
                               <span className={prediction.side ? "text-green-500" : "text-red-500"}>
@@ -230,8 +338,8 @@ export default function DashboardPage() {
                             </div>
                           </div>
                           <span className={`px-2 py-1 text-xs rounded ${prediction.status === "won"
-                              ? "bg-green-500/10 text-green-500"
-                              : "bg-red-500/10 text-red-500"
+                            ? "bg-green-500/10 text-green-500"
+                            : "bg-red-500/10 text-red-500"
                             }`}>
                             {prediction.status === "won" ? "Won" : "Lost"}
                           </span>
