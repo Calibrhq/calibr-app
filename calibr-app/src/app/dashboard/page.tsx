@@ -14,7 +14,7 @@ import { buildSettlePredictionTx, buildClaimAllTx } from "@/lib/calibr-transacti
 import { toast } from "sonner";
 
 export default function DashboardPage() {
-  const { isConnected, reputation, tier, address, userProfile, signAndExecute } = useWallet();
+  const { isConnected, reputation, tier, address, userProfile, signAndExecuteTransaction } = useWallet();
   const { data: pointsBalance, isLoading: isLoadingPoints } = usePointsBalance();
   const { data: predictions, isLoading: isLoadingPredictions, refetch: refetchPredictions } = useUserPredictions();
   const { data: markets } = useMarkets();
@@ -75,23 +75,31 @@ export default function DashboardPage() {
   // --- Handlers ---
 
   const handleClaim = async (prediction: any) => {
-    if (!userProfile) return;
+    if (!userProfile) {
+      toast.error("User profile not found");
+      return;
+    }
+    if (!pointsBalance) {
+      toast.error("Points balance not found");
+      return;
+    }
+
     try {
       const market = getMarket(prediction.marketId);
       if (!market) return;
 
       setIsClaiming(true);
-      const tx = buildSettlePredictionTx(userProfile.id, prediction.predictionId, market.id);
+      // Corrected: Pass pointsBalance.id
+      const tx = buildSettlePredictionTx(userProfile.id, prediction.predictionId, market.id, pointsBalance.id);
 
-      await signAndExecute(tx, {
-        onSuccess: () => {
-          toast.success("Winnings claimed successfully! Points added.");
-          refetchPredictions();
-        },
-        onError: (err) => toast.error("Failed to claim winnings")
-      });
+      const result = await signAndExecuteTransaction(tx);
+      if (result) {
+        toast.success("Winnings claimed successfully! Points added.");
+        refetchPredictions();
+      }
     } catch (e) {
       console.error(e);
+      toast.error("Failed to claim winnings");
     } finally {
       setIsClaiming(false);
     }
@@ -99,6 +107,11 @@ export default function DashboardPage() {
 
   const handleClaimAll = async () => {
     if (!userProfile) return;
+    if (!pointsBalance) {
+      toast.error("Points balance not found");
+      return;
+    }
+
     try {
       setIsClaiming(true);
       const claims = claimablePredictions.map(p => ({
@@ -107,17 +120,17 @@ export default function DashboardPage() {
         marketId: p.marketId
       }));
 
-      const tx = buildClaimAllTx(claims);
+      // Corrected: Pass pointsBalance.id
+      const tx = buildClaimAllTx(claims, pointsBalance.id);
 
-      await signAndExecute(tx, {
-        onSuccess: () => {
-          toast.success(`Claimed ${claims.length} predictions! Points added.`);
-          refetchPredictions();
-        },
-        onError: (err) => toast.error("Failed to claim all winnings")
-      });
+      const result = await signAndExecuteTransaction(tx);
+      if (result) {
+        toast.success(`Claimed ${claims.length} predictions! Points added.`);
+        refetchPredictions();
+      }
     } catch (e) {
       console.error(e);
+      toast.error("Failed to claim all winnings");
     } finally {
       setIsClaiming(false);
     }

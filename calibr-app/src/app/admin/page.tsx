@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { Shield, Plus, Lock, Check, X, RefreshCw, Calendar } from "lucide-react";
 
 export default function AdminPage() {
-    const { isConnected, account, signAndExecute } = useWalletContext();
+    const { isConnected, address, signAndExecuteTransaction } = useWalletContext();
     const { data: markets, isLoading, refetch } = useMarkets();
     const [activeTab, setActiveTab] = useState<"create" | "manage">("create");
 
@@ -28,7 +28,7 @@ export default function AdminPage() {
 
     const handleCreateMarket = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!isConnected || !account) {
+        if (!isConnected || !address) {
             toast.error("Please connect wallet");
             return;
         }
@@ -53,24 +53,19 @@ export default function AdminPage() {
                 adminCapId,
                 question,
                 deadlineMs,
-                account.address
+                address
             );
 
-            await signAndExecute(tx, {
-                onSuccess: () => {
-                    toast.success("Market created successfully!");
-                    setQuestion("");
-                    setDeadlineDate("");
-                    refetch();
-                },
-                onError: (err) => {
-                    console.error("Create market error:", err);
-                    toast.error("Failed to create market");
-                }
-            });
+            const result = await signAndExecuteTransaction(tx);
+            if (result) {
+                toast.success("Market created successfully!");
+                setQuestion("");
+                setDeadlineDate("");
+                refetch();
+            }
         } catch (error) {
-            console.error(error);
-            toast.error("An error occurred");
+            console.error("Create market error:", error);
+            toast.error("Failed to create market");
         } finally {
             setIsCreating(false);
         }
@@ -80,14 +75,15 @@ export default function AdminPage() {
         if (!isConnected) return;
         try {
             const tx = buildLockMarketTx(adminCapId, marketId);
-            await signAndExecute(tx, {
-                onSuccess: () => {
-                    toast.success("Market locked successfully");
-                    refetch();
-                },
-                onError: (err) => toast.error("Failed to lock market")
-            });
-        } catch (e) { console.error(e); }
+            const result = await signAndExecuteTransaction(tx);
+            if (result) {
+                toast.success("Market locked successfully");
+                refetch();
+            }
+        } catch (e) {
+            console.error(e);
+            toast.error("Failed to lock market");
+        }
     };
 
     const handleResolve = async (marketId: string, outcome: boolean) => {
@@ -96,14 +92,15 @@ export default function AdminPage() {
 
         try {
             const tx = buildResolveMarketTx(adminCapId, marketId, outcome);
-            await signAndExecute(tx, {
-                onSuccess: () => {
-                    toast.success(`Market resolved: ${outcome ? "YES" : "NO"}`);
-                    refetch();
-                },
-                onError: (err) => toast.error("Failed to resolve market")
-            });
-        } catch (e) { console.error(e); }
+            const result = await signAndExecuteTransaction(tx);
+            if (result) {
+                toast.success(`Market resolved: ${outcome ? "YES" : "NO"}`);
+                refetch();
+            }
+        } catch (e) {
+            console.error(e);
+            toast.error("Failed to resolve market");
+        }
     };
 
     // --- Render Helpers ---
@@ -134,8 +131,8 @@ export default function AdminPage() {
                     <button
                         onClick={() => setActiveTab("create")}
                         className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "create"
-                                ? "bg-background shadow-sm text-foreground"
-                                : "text-muted-foreground hover:text-foreground"
+                            ? "bg-background shadow-sm text-foreground"
+                            : "text-muted-foreground hover:text-foreground"
                             }`}
                     >
                         Create Market
@@ -143,8 +140,8 @@ export default function AdminPage() {
                     <button
                         onClick={() => setActiveTab("manage")}
                         className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "manage"
-                                ? "bg-background shadow-sm text-foreground"
-                                : "text-muted-foreground hover:text-foreground"
+                            ? "bg-background shadow-sm text-foreground"
+                            : "text-muted-foreground hover:text-foreground"
                             }`}
                     >
                         Manage Markets
@@ -229,10 +226,10 @@ export default function AdminPage() {
                                     <div className="flex items-start justify-between">
                                         <h3 className="font-medium">{market.question}</h3>
                                         <span className={`px-2 py-0.5 rounded text-xs font-medium border ${market.status === 'resolved'
-                                                ? "bg-green-500/10 text-green-600 border-green-500/20"
-                                                : market.status === 'resolving'
-                                                    ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                                                    : "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                                            ? "bg-green-500/10 text-green-600 border-green-500/20"
+                                            : market.status === 'resolving'
+                                                ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                                                : "bg-blue-500/10 text-blue-600 border-blue-500/20"
                                             }`}>
                                             {market.status.toUpperCase()}
                                         </span>

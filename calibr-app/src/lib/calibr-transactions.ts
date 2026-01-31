@@ -205,30 +205,32 @@ export function buildResolveMarketTx(
 /**
  * Build a batch transaction to settle multiple winning predictions.
  * 
- * Bundles multiple settle_prediction calls into one PTB.
+ * Bundles multiple settle_prediction_with_points calls into one PTB.
  */
 export function buildClaimAllTx(
     claims: Array<{
         profileId: string;
         predictionId: string;
         marketId: string;
-    }>
+    }>,
+    pointsBalanceId: string
 ): Transaction {
     const tx = new Transaction();
     const packageId = getPackageId(DEFAULT_NETWORK);
 
-    // Profile is a single mutable object used across all calls
-    // We assume all claims use the same profile (user's profile)
+    // Profile and PointsBalance are single mutable objects used across all calls
     if (claims.length === 0) return tx;
     const profileObj = tx.object(claims[0].profileId);
+    const balanceObj = tx.object(pointsBalanceId);
 
     for (const claim of claims) {
         tx.moveCall({
-            target: `${packageId}::prediction::settle_prediction`,
+            target: `${packageId}::prediction::settle_prediction_with_points`,
             arguments: [
                 profileObj,              // &mut UserProfile
                 tx.object(claim.predictionId), // &mut Prediction
                 tx.object(claim.marketId),     // &Market
+                balanceObj,              // &mut PointsBalance
             ],
         });
     }
