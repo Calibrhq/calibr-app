@@ -56,6 +56,7 @@ export interface ChainUserProfile {
 export interface ChainMarket {
     id: string;
     question: number[]; // UTF-8 bytes, need to decode
+    deadline: number;   // Resolution deadline (milliseconds since epoch)
     yes_risk_total: number;
     no_risk_total: number;
     yes_count: number;

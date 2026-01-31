@@ -52,6 +52,9 @@ module calibr::events {
         /// The prediction question (e.g., "Will BTC > $100k by Dec 2025?")
         question: vector<u8>,
         
+        /// Resolution deadline (milliseconds since Unix epoch)
+        deadline: u64,
+        
         /// Address authorized to resolve this market
         authority: address,
     }
@@ -297,11 +300,13 @@ module calibr::events {
     public(package) fun emit_market_created(
         market_id: ID,
         question: vector<u8>,
+        deadline: u64,
         authority: address,
     ) {
         event::emit(MarketCreated {
             market_id,
             question,
+            deadline,
             authority,
         });
     }

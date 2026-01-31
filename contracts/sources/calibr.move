@@ -156,6 +156,10 @@ module calibr::calibr {
         /// The prediction question (e.g., "Will BTC exceed $100k by Dec 2025?")
         question: vector<u8>,
         
+        /// Resolution deadline (milliseconds since Unix epoch)
+        /// After this time, admin can resolve the market
+        deadline: u64,
+        
         /// Sum of all R values for YES predictions
         /// Used to calculate winner payouts if YES wins
         yes_risk_total: u64,
@@ -311,12 +315,14 @@ module calibr::calibr {
     /// The market.move module uses this to implement create_market().
     public(package) fun new_market(
         question: vector<u8>,
+        deadline: u64,
         authority: address,
         ctx: &mut TxContext
     ): Market {
         Market {
             id: object::new(ctx),
             question,
+            deadline,
             yes_risk_total: 0,
             no_risk_total: 0,
             yes_count: 0,
@@ -444,6 +450,11 @@ module calibr::calibr {
     /// Get the market question
     public fun get_market_question(market: &Market): vector<u8> {
         market.question
+    }
+    
+    /// Get the market deadline (milliseconds since Unix epoch)
+    public fun get_market_deadline(market: &Market): u64 {
+        market.deadline
     }
     
     /// Check if market is locked

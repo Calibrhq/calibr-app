@@ -300,6 +300,7 @@ module calibr::market {
     public entry fun create_market(
         _admin_cap: &AdminCap,
         question: vector<u8>,
+        deadline: u64,
         authority: address,
         ctx: &mut TxContext
     ) {
@@ -309,6 +310,7 @@ module calibr::market {
         // Create the market with all fields initialized
         let market = calibr::new_market(
             question,
+            deadline,
             authority,
             ctx
         );
@@ -320,6 +322,7 @@ module calibr::market {
         events::emit_market_created(
             market_id,
             question,
+            deadline,
             authority,
         );
         

@@ -142,6 +142,12 @@ export function useMarkets(category?: string) {
                     ? new Date(parseInt(creationInfo.timestampMs)).toISOString().split('T')[0]
                     : new Date().toISOString().split('T')[0];
 
+                // Parse deadline from on-chain data (milliseconds since epoch)
+                const deadlineMs = parseInt(fields.deadline || "0");
+                const resolveDate = deadlineMs > 0
+                    ? new Date(deadlineMs).toISOString().split('T')[0]
+                    : "No deadline";
+
                 return {
                     id: id,
                     question: question,
@@ -152,7 +158,7 @@ export function useMarkets(category?: string) {
                     resolutionCriteria: "Resolves based on real-world outcome verified by admin.",
                     status: status,
                     startDate: startDate,
-                    resolveDate: fields.locked ? "Locked" : "Open",
+                    resolveDate: resolveDate,
                 };
             }).filter((m: any): m is Market => m !== null);
 
