@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Menu, X, Trophy } from "lucide-react";
+import { Menu, X, Trophy, Coins } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggleCompact } from "@/components/ui/theme-toggle";
@@ -16,6 +16,9 @@ const navItems = [
   { label: "Leaderboard", href: "/leaderboard" },
   { label: "Profile", href: "/profile" },
 ];
+
+// Special nav item with icon
+const buyPointsNavItem = { label: "Buy Points", href: "/points" };
 
 export function Header() {
   const pathname = usePathname();
@@ -60,6 +63,18 @@ export function Header() {
           >
             How it works
           </Link>
+          <Link
+            href={buyPointsNavItem.href}
+            className={cn(
+              "px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5",
+              pathname === buyPointsNavItem.href
+                ? "text-primary bg-primary/10 shadow-sm"
+                : "text-primary/80 hover:text-primary hover:bg-primary/10"
+            )}
+          >
+            <Coins className="w-4 h-4" />
+            {buyPointsNavItem.label}
+          </Link>
         </nav>
 
         {/* Right Side */}
@@ -69,7 +84,7 @@ export function Header() {
 
           {/* Reputation Badge (when connected) - same height as Connect Wallet button */}
           {isConnected && (
-            <Link 
+            <Link
               href="/profile"
               className="hidden sm:flex items-center justify-center h-10 gap-1.5 px-3 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 text-xs transition-all duration-200"
             >
@@ -135,7 +150,20 @@ export function Header() {
             >
               How it works
             </Link>
-            
+            <Link
+              href={buyPointsNavItem.href}
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                "flex items-center gap-2 px-4 py-3 text-sm font-medium rounded-lg transition-colors",
+                pathname === buyPointsNavItem.href
+                  ? "text-primary bg-primary/10"
+                  : "text-primary/80 hover:text-primary hover:bg-primary/10"
+              )}
+            >
+              <Coins className="w-4 h-4" />
+              {buyPointsNavItem.label}
+            </Link>
+
             <div className="pt-4 border-t border-border mt-4 space-y-3 px-4">
               {isConnected && (
                 <Link
