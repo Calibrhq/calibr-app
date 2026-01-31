@@ -27,9 +27,9 @@ export const MIST_PER_SUI = 1_000_000_000;
 
 export const POINTS_ECONOMY_OBJECTS = {
     testnet: {
-        treasury: "", // Treasury shared object ID
-        marketConfig: "", // PointsMarketConfig shared object ID
-        balanceRegistry: "", // BalanceRegistry shared object ID
+        treasury: "0x9a8afaabb366e3efffba7b5a0565bdf86d224c24b255c129acc3be7ee9febcac", // Treasury shared object ID
+        marketConfig: "0xa759101831a5e08e1ab3a8771f6c94dd1d1c9cfb9608a771b6036c0b2928157c", // PointsMarketConfig shared object ID
+        balanceRegistry: "0x1aabc8902e78648fd61d1dae77dd3a762a84615ed6fa1f88b1f14b5a1a3ae837", // BalanceRegistry shared object ID
     },
     mainnet: {
         treasury: "",

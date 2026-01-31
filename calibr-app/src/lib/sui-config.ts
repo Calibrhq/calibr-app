@@ -11,14 +11,14 @@ export const NETWORK_URLS: Record<NetworkType, string> = {
 
 // Package IDs per network
 export const PACKAGE_IDS: Record<NetworkType, string> = {
-  testnet: "0xfc4c4573da3eb0618e3f495b315d585cb7cf439dbc807494108b2d85dc2ef502",
+  testnet: "0x4c049202f74d232369834eb0590a572a9235e59bd9a17ff6ce52a10b3eff071e",
   mainnet: "", // TODO: Update with mainnet deployment
   devnet: "", // TODO: Update with devnet deployment
 };
 
 // Admin Cap IDs per network (for market creation)
 export const ADMIN_CAP_IDS: Record<NetworkType, string> = {
-  testnet: "0xf9440fbce53a69db21b702d0125c2e3354a64a3c58ba8a4e987b6abed6f250f9",
+  testnet: "0x43c523b0f824abf2b0104a65ae0aa349fdf776455341e109594cc6800edd87a3",
   mainnet: "",
   devnet: "",
 };

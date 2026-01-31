@@ -53,11 +53,8 @@ export function SuiProvider({ children }: SuiProviderProps) {
 
   // Show children without wallet features during SSR or while loading
   if (!isClient || !DAppKitProvider || !dAppKit) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        {children}
-      </QueryClientProvider>
-    );
+    return null; // Block rendering until DAppKit is ready to prevent context errors
+
   }
 
   const Provider = DAppKitProvider;

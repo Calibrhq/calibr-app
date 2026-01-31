@@ -2,24 +2,25 @@
 
 import { useState } from "react";
 import { MarketCard } from "@/components/markets/MarketCard";
-import { mockMarkets } from "@/data/mockMarkets";
+import { useMarkets } from "@/hooks/useMarkets";
 import { cn } from "@/lib/utils";
 
 const categories = ["All", "Macro", "Crypto", "Governance", "Tech", "Climate"];
 
 export default function ExplorePage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const { data: allMarkets, isLoading } = useMarkets();
 
-  const filteredMarkets = selectedCategory === "All"
-    ? mockMarkets
-    : mockMarkets.filter((m) => m.category === selectedCategory);
+  const filteredMarkets = (allMarkets || []).filter(m =>
+    selectedCategory === "All" || m.category === selectedCategory
+  );
 
   return (
     <div className="container py-8 md:py-12">
       <div className="max-w-3xl mb-10">
         <h1 className="mb-3">Explore Markets</h1>
         <p className="text-lg text-muted-foreground">
-          Make predictions on real-world events. Your reputation reflects how well 
+          Make predictions on real-world events. Your reputation reflects how well
           your confidence matches reality.
         </p>
       </div>
@@ -41,27 +42,35 @@ export default function ExplorePage() {
         ))}
       </div>
 
-      <div className="grid gap-5 md:grid-cols-2">
-        {filteredMarkets.map((market, index) => (
-          <div
-            key={market.id}
-            className="animate-fade-in"
-            style={{ animationDelay: `${index * 50}ms` }}
-          >
-            <MarketCard
-              id={market.id}
-              question={market.question}
-              category={market.category}
-              yesPercentage={market.yesPercentage}
-              volume={market.volume}
-              isTrending={market.isTrending}
-              resolveDate={market.resolveDate}
-            />
-          </div>
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="grid gap-5 md:grid-cols-2">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-[200px] rounded-xl bg-muted/20 animate-pulse" />
+          ))}
+        </div>
+      ) : (
+        <div className="grid gap-5 md:grid-cols-2">
+          {filteredMarkets.map((market, index) => (
+            <div
+              key={market.id}
+              className="animate-fade-in"
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <MarketCard
+                id={market.id}
+                question={market.question}
+                category={market.category}
+                yesPercentage={market.yesPercentage}
+                volume={market.volume}
+                isTrending={market.isTrending}
+                resolveDate={market.resolveDate}
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
-      {filteredMarkets.length === 0 && (
+      {!isLoading && filteredMarkets.length === 0 && (
         <div className="text-center py-16">
           <p className="text-muted-foreground">No markets found in this category.</p>
         </div>
