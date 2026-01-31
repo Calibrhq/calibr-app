@@ -5,8 +5,8 @@ import { Wallet, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useWallets, useDAppKit } from "@mysten/dapp-kit-react";
-import type { UiWallet } from "@mysten/dapp-kit-core";
+import { useWallets, useConnectWallet } from "@mysten/dapp-kit";
+import type { WalletWithRequiredFeatures } from "@mysten/dapp-kit";
 
 interface ConnectWalletModalContentProps {
   onClose: () => void;
@@ -14,28 +14,33 @@ interface ConnectWalletModalContentProps {
 
 export function ConnectWalletModalContent({ onClose }: ConnectWalletModalContentProps) {
   const wallets = useWallets();
-  const dAppKit = useDAppKit();
+  const { mutate: connectWallet } = useConnectWallet();
   const [connectingTo, setConnectingTo] = useState<string | null>(null);
 
-  const handleConnect = async (wallet: UiWallet) => {
+  const handleConnect = (wallet: WalletWithRequiredFeatures) => {
     setConnectingTo(wallet.name);
-    try {
-      await dAppKit.connectWallet({ wallet });
-      toast.success(`Connected to ${wallet.name}`);
-      onClose();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Connection failed";
-      if (!message.toLowerCase().includes("reject") && !message.toLowerCase().includes("cancel")) {
-        toast.error(message);
+
+    connectWallet(
+      { wallet },
+      {
+        onSuccess: () => {
+          toast.success(`Connected to ${wallet.name}`);
+          onClose();
+          setConnectingTo(null);
+        },
+        onError: (err) => {
+          const message = err instanceof Error ? err.message : "Connection failed";
+          // Ignore rejection by user
+          if (!message.toLowerCase().includes("reject") && !message.toLowerCase().includes("cancel")) {
+            toast.error(message);
+          }
+          setConnectingTo(null);
+        }
       }
-    } finally {
-      setConnectingTo(null);
-    }
+    );
   };
 
-  const walletList: UiWallet[] = Array.isArray(wallets) ? wallets : [];
-
-  if (walletList.length === 0) {
+  if (wallets.length === 0) {
     return (
       <p className="text-sm text-muted-foreground text-center py-6">
         No Sui wallets detected. Install a wallet like Sui Wallet or Backpack to get started.
@@ -45,7 +50,7 @@ export function ConnectWalletModalContent({ onClose }: ConnectWalletModalContent
 
   return (
     <ul className="space-y-2">
-      {walletList.map((wallet) => (
+      {wallets.map((wallet) => (
         <li key={wallet.name}>
           <Button
             type="button"

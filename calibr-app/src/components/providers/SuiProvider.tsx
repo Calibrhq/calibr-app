@@ -1,69 +1,37 @@
 "use client";
-/* eslint-disable */
 
-import { ReactNode, useMemo, useState, useEffect } from "react";
+import { ReactNode, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createDAppKitInstance } from "@/lib/sui-config";
+import { SuiClientProvider, WalletProvider } from "@mysten/dapp-kit";
+import { networkConfig, DEFAULT_NETWORK } from "@/lib/sui-config";
+import "@mysten/dapp-kit/dist/index.css";
 
 interface SuiProviderProps {
   children: ReactNode;
 }
 
 export function SuiProvider({ children }: SuiProviderProps) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [DAppKitProvider, setDAppKitProvider] = useState<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [dAppKit, setDAppKit] = useState<any>(null);
-  const [isClient, setIsClient] = useState(false);
-
   // Create query client with proper configuration
-  const queryClient = useMemo(
+  const [queryClient] = useState(
     () =>
       new QueryClient({
         defaultOptions: {
           queries: {
             staleTime: 60 * 1000, // 1 minute
             refetchOnWindowFocus: false,
+            retry: false,
           },
         },
-      }),
-    []
+      })
   );
-
-  // Initialize dApp Kit on client side only
-  useEffect(() => {
-    setIsClient(true);
-
-    // Dynamic import to avoid SSR issues
-    const initDAppKit = async () => {
-      try {
-        const [module, dAppKitInstance] = await Promise.all([
-          import("@mysten/dapp-kit-react"),
-          createDAppKitInstance(),
-        ]);
-        setDAppKitProvider(() => module.DAppKitProvider);
-        setDAppKit(dAppKitInstance);
-      } catch (error) {
-        console.error("Failed to load dApp Kit:", error);
-      }
-    };
-
-    initDAppKit();
-  }, []);
-
-  // Show children without wallet features during SSR or while loading
-  if (!isClient || !DAppKitProvider || !dAppKit) {
-    return null; // Block rendering until DAppKit is ready to prevent context errors
-
-  }
-
-  const Provider = DAppKitProvider;
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Provider dAppKit={dAppKit}>
-        {children}
-      </Provider>
+      <SuiClientProvider networks={networkConfig} defaultNetwork={DEFAULT_NETWORK}>
+        <WalletProvider autoConnect={true}>
+          {children}
+        </WalletProvider>
+      </SuiClientProvider>
     </QueryClientProvider>
   );
 }

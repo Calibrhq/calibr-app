@@ -37,30 +37,12 @@ export const CONTRACT_IDS = {
 // Default network for the app
 export const DEFAULT_NETWORK: NetworkType = "testnet";
 
-// Factory function to create dAppKit instance (called only on client side)
-// This is async and must be awaited
-export async function createDAppKitInstance() {
-  // Dynamic import to avoid SSR issues (ESM modules)
-  const [dappKitModule, suiModule] = await Promise.all([
-    import("@mysten/dapp-kit-react"),
-    import("@mysten/sui/grpc"),
-  ]);
-
-  const { createDAppKit } = dappKitModule;
-  const { SuiGrpcClient } = suiModule;
-
-  return createDAppKit({
-    networks: [...SUPPORTED_NETWORKS] as unknown as ["testnet", "mainnet", "devnet"],
-    defaultNetwork: DEFAULT_NETWORK,
-    createClient(network: string) {
-      return new SuiGrpcClient({
-        network,
-        baseUrl: NETWORK_URLS[network as NetworkType],
-      });
-    },
-    autoConnect: true,
-  });
-}
+import { createNetworkConfig } from "@mysten/dapp-kit";
+export const { networkConfig, useNetworkVariable } = createNetworkConfig({
+  testnet: { url: "https://fullnode.testnet.sui.io:443" },
+  mainnet: { url: "https://fullnode.mainnet.sui.io:443" },
+  devnet: { url: "https://fullnode.devnet.sui.io:443" },
+} as any);
 
 // Helper to get explorer URL for transactions
 export function getExplorerUrl(type: "tx" | "object" | "address", id: string, network: NetworkType = DEFAULT_NETWORK) {

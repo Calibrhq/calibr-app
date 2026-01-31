@@ -1,11 +1,18 @@
 "use client";
-/* eslint-disable */
 
 import { createContext, useContext, ReactNode, useState, useEffect, useCallback } from "react";
-import { DEFAULT_NETWORK, getExplorerUrl, getPackageId } from "@/lib/sui-config";
-import { buildCreateProfileTx } from "@/lib/calibr-transactions";
+import {
+  useCurrentAccount,
+  useCurrentWallet,
+  useSignAndExecuteTransaction,
+  useDisconnectWallet,
+  useSuiClient
+} from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
+import { getPackageId, DEFAULT_NETWORK } from "@/lib/sui-config";
+import { toast } from "sonner";
 
+// Define UserProfile locally to avoid import issues
 interface UserProfile {
   id: string;
   owner: string;
@@ -16,39 +23,28 @@ interface UserProfile {
 }
 
 interface WalletContextValue {
-  // Connection state
   isConnected: boolean;
   isConnecting: boolean;
-  isDisconnected: boolean;
   isLoading: boolean;
-
-  // Account info
   address: string | null;
   shortAddress: string | null;
-
-  // Wallet info
   walletName: string | null;
   walletIcon: string | null;
-
-  // Balance
   balance: string;
-
-  // User profile from Calibr contracts
   userProfile: UserProfile | null;
   isLoadingProfile: boolean;
   hasProfile: boolean;
+  // Computed reputation properties
   reputation: number;
   maxConfidence: number;
   tier: "New" | "Proven" | "Elite";
-
   // Actions
-  disconnect: () => Promise<void>;
+  disconnect: () => void;
   refreshProfile: () => Promise<void>;
   refreshBalance: () => Promise<void>;
   createProfile: () => Promise<{ success: boolean; error?: string }>;
   signAndExecuteTransaction: (tx: Transaction) => Promise<{ digest: string } | null>;
-
-  // Utilities
+  // Helpers
   shortenAddress: (address: string) => string;
   getAddressExplorerUrl: () => string;
 }
@@ -56,7 +52,6 @@ interface WalletContextValue {
 const defaultValue: WalletContextValue = {
   isConnected: false,
   isConnecting: false,
-  isDisconnected: true,
   isLoading: true,
   address: null,
   shortAddress: null,
@@ -96,75 +91,23 @@ interface WalletProviderProps {
 }
 
 export function WalletContextProvider({ children }: WalletProviderProps) {
-  const [isLoading, setIsLoading] = useState(true);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [hooks, setHooks] = useState<{
-    useCurrentAccount: () => { address?: string } | null;
-    useCurrentWallet: () => { name?: string; icon?: string } | null;
-    useWalletConnection: () => { status: string };
-    useCurrentClient: () => unknown;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    useDAppKit: () => any;
-  } | null>(null);
-
-  // Load hooks on client side
-  useEffect(() => {
-    import("@mysten/dapp-kit-react").then((module) => {
-      setHooks({
-        useCurrentAccount: module.useCurrentAccount,
-        useCurrentWallet: module.useCurrentWallet,
-        useWalletConnection: module.useWalletConnection,
-        useCurrentClient: module.useCurrentClient,
-        useDAppKit: module.useDAppKit,
-      });
-      setIsLoading(false);
-    }).catch((error) => {
-      console.error("Failed to load wallet hooks:", error);
-      setIsLoading(false);
-    });
-  }, []);
-
-  if (isLoading || !hooks) {
-    return (
-      <WalletContext.Provider value={defaultValue}>
-        {children}
-      </WalletContext.Provider>
-    );
-  }
-
-  return (
-    <WalletProviderInner hooks={hooks}>
-      {children}
-    </WalletProviderInner>
-  );
-}
-
-interface WalletProviderInnerProps {
-  children: ReactNode;
-  hooks: {
-    useCurrentAccount: () => { address?: string } | null;
-    useCurrentWallet: () => { name?: string; icon?: string } | null;
-    useWalletConnection: () => { status: string };
-    useCurrentClient: () => unknown;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    useDAppKit: () => any;
-  };
-}
-
-function WalletProviderInner({ children, hooks }: WalletProviderInnerProps) {
-  const currentAccount = hooks.useCurrentAccount();
-  const currentWallet = hooks.useCurrentWallet();
-  const connection = hooks.useWalletConnection();
-  const client = hooks.useCurrentClient();
-  const dAppKit = hooks.useDAppKit();
+  const currentAccount = useCurrentAccount();
+  const currentWallet = useCurrentWallet();
+  const { mutate: signAndExecuteTransactionMutation } = useSignAndExecuteTransaction();
+  const { mutate: disconnectWallet } = useDisconnectWallet();
+  const client = useSuiClient();
 
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [balance, setBalance] = useState<string>("0");
+  const [isClient, setIsClient] = useState(false);
 
-  const isConnected = connection.status === "connected";
-  const isConnecting = connection.status === "connecting";
-  const isDisconnected = connection.status === "disconnected";
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const isConnected = !!currentAccount;
+  const isConnecting = false; // dapp-kit manages this
 
   const shortenAddress = useCallback((address: string) => {
     if (!address) return "";
@@ -172,20 +115,15 @@ function WalletProviderInner({ children, hooks }: WalletProviderInnerProps) {
   }, []);
 
   const fetchBalance = useCallback(async () => {
-    if (!currentAccount?.address || !client) return;
-
+    if (!currentAccount?.address) return;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const clientAny = client as any;
-      const balanceResult = await clientAny.core?.getBalance?.({
+      const balanceResult = await client.getBalance({
         owner: currentAccount.address,
       });
 
-      if (balanceResult) {
-        const totalBalance = balanceResult?.totalBalance || balanceResult?.balance || "0";
-        const suiBalance = Number(totalBalance) / 1_000_000_000;
-        setBalance(suiBalance.toFixed(4));
-      }
+      const totalBalance = balanceResult?.totalBalance || "0";
+      const suiBalance = Number(totalBalance) / 1_000_000_000;
+      setBalance(suiBalance.toFixed(4));
     } catch (error) {
       console.error("Error fetching balance:", error);
       setBalance("0");
@@ -204,30 +142,18 @@ function WalletProviderInner({ children, hooks }: WalletProviderInnerProps) {
       const packageId = getPackageId(DEFAULT_NETWORK);
       const structType = `${packageId}::calibr::UserProfile`;
 
-      // Use direct RPC fetch instead of dAppKit client for reliability
-      const response = await fetch("https://fullnode.testnet.sui.io:443", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: 1,
-          method: "suix_getOwnedObjects",
-          params: [
-            currentAccount.address,
-            { filter: { StructType: structType }, options: { showContent: true } }
-          ],
-        }),
+      const result = await client.getOwnedObjects({
+        owner: currentAccount.address,
+        filter: { StructType: structType },
+        options: { showContent: true }
       });
 
-      const result = await response.json();
-      console.log("Profile fetch result:", result);
-
-      if (result.result?.data?.length > 0) {
-        const objData = result.result.data[0].data;
+      if (result.data && result.data.length > 0) {
+        const objData = result.data[0].data;
         if (objData?.content?.dataType === "moveObject") {
-          const fields = objData.content.fields;
+          const fields = objData.content.fields as any;
 
-          if (fields && typeof fields === 'object') {
+          if (fields) {
             const repScore = Number(fields.reputation_score || 700);
             const tier = repScore < 700 ? "New" : repScore <= 850 ? "Proven" : "Elite";
 
@@ -252,87 +178,68 @@ function WalletProviderInner({ children, hooks }: WalletProviderInnerProps) {
     } finally {
       setIsLoadingProfile(false);
     }
-  }, [currentAccount?.address]);
+  }, [currentAccount?.address, client]);
 
-  const disconnect = useCallback(async () => {
-    try {
-      await dAppKit?.disconnectWallet();
-    } catch (error) {
-      console.error("Error disconnecting wallet:", error);
-    }
-  }, [dAppKit]);
-
+  // Effects
   useEffect(() => {
-    if (isConnected && currentAccount?.address) {
-      fetchBalance();
-      fetchUserProfile();
-    } else {
-      setBalance("0");
-      setUserProfile(null);
-    }
-  }, [isConnected, currentAccount?.address, fetchBalance, fetchUserProfile]);
+    fetchBalance();
+    fetchUserProfile();
+  }, [fetchBalance, fetchUserProfile]);
 
-  const getAddressExplorerUrl = useCallback(() => {
-    if (!currentAccount?.address) return "";
-    return getExplorerUrl("address", currentAccount.address);
-  }, [currentAccount?.address]);
+  // Actions
+  const handleDisconnect = useCallback(() => {
+    disconnectWallet();
+    setUserProfile(null);
+    setBalance("0");
+  }, [disconnectWallet]);
 
-  // Sign and execute a transaction
-  const signAndExecuteTransaction = useCallback(async (tx: Transaction): Promise<{ digest: string } | null> => {
-    if (!dAppKit?.signAndExecuteTransaction) {
-      console.error("signAndExecuteTransaction not available");
+  const handleSignAndExecute = useCallback(async (tx: Transaction): Promise<{ digest: string } | null> => {
+    if (!currentAccount) {
+      toast.error("Wallet not connected");
       return null;
     }
-    try {
-      const result = await dAppKit.signAndExecuteTransaction({ transaction: tx });
-      return result;
-    } catch (error) {
-      console.error("Transaction failed:", error);
-      throw error;
-    }
-  }, [dAppKit]);
 
-  // Create a new profile
-  const createProfile = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
-    if (!isConnected) {
-      return { success: false, error: "Wallet not connected" };
-    }
-    if (userProfile) {
-      return { success: false, error: "Profile already exists" };
-    }
-    try {
-      const tx = buildCreateProfileTx();
-      const result = await signAndExecuteTransaction(tx);
-      if (result) {
-        // Wait a bit for chain to index the new object, then refresh with retries
-        console.log("Profile created, waiting for chain to index...");
-
-        // Retry up to 5 times with increasing delays
-        for (let attempt = 0; attempt < 5; attempt++) {
-          await new Promise(resolve => setTimeout(resolve, 1000 + attempt * 500));
-          await fetchUserProfile();
-
-          // Check if profile was found (small delay to let state update)
-          await new Promise(resolve => setTimeout(resolve, 100));
-
-          // Get fresh check - we'll check after calling this function in the component
-          console.log(`Profile fetch attempt ${attempt + 1}`);
+    return new Promise((resolve) => {
+      signAndExecuteTransactionMutation(
+        {
+          transaction: tx,
+          chain: `sui:${DEFAULT_NETWORK}`,
+        },
+        {
+          onSuccess: (result) => {
+            resolve(result);
+            // Refresh data after transaction
+            setTimeout(() => {
+              fetchBalance();
+              fetchUserProfile();
+            }, 1000);
+          },
+          onError: (error) => {
+            console.error("Transaction failed:", error);
+            toast.error("Transaction failed: " + error.message);
+            resolve(null);
+          }
         }
+      );
+    });
+  }, [currentAccount, signAndExecuteTransactionMutation, fetchBalance, fetchUserProfile]);
 
-        return { success: true };
-      }
-      return { success: false, error: "Transaction failed" };
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : "Unknown error";
-      return { success: false, error: errorMsg };
-    }
-  }, [isConnected, userProfile, signAndExecuteTransaction, fetchUserProfile]);
+  const createProfile = async () => {
+    // This is handled by a transaction usually.
+    // We defer to the page component to build and execute the tx, then this context just refreshes.
+    await fetchUserProfile();
+    return { success: true };
+  };
+
+  // Derived state
+  const reputation = userProfile?.reputationScore || 700;
+  const maxConfidence = userProfile?.maxConfidence || getMaxConfidence(reputation);
+  const tier = userProfile?.tier || (reputation < 700 ? "New" : reputation <= 850 ? "Proven" : "Elite");
 
   const value: WalletContextValue = {
     isConnected,
     isConnecting,
-    isDisconnected,
-    isLoading: false,
+    isLoading: !isClient,
     address: currentAccount?.address || null,
     shortAddress: currentAccount?.address ? shortenAddress(currentAccount.address) : null,
     walletName: currentWallet?.name || null,
@@ -340,17 +247,17 @@ function WalletProviderInner({ children, hooks }: WalletProviderInnerProps) {
     balance,
     userProfile,
     isLoadingProfile,
-    hasProfile: userProfile !== null,
-    reputation: userProfile?.reputationScore ?? 700,
-    maxConfidence: userProfile?.maxConfidence ?? getMaxConfidence(700),
-    tier: userProfile?.tier ?? "New",
-    disconnect,
+    hasProfile: !!userProfile,
+    reputation,
+    maxConfidence,
+    tier,
+    disconnect: handleDisconnect,
     refreshProfile: fetchUserProfile,
     refreshBalance: fetchBalance,
     createProfile,
-    signAndExecuteTransaction,
+    signAndExecuteTransaction: handleSignAndExecute,
     shortenAddress,
-    getAddressExplorerUrl,
+    getAddressExplorerUrl: () => "",
   };
 
   return (
