@@ -3,17 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Menu, X, Wallet, ChevronDown, Trophy } from "lucide-react";
+import { Menu, X, Trophy } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggleCompact } from "@/components/ui/theme-toggle";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { WalletButton, WalletButtonCompact } from "@/components/wallet/WalletButton";
+import { useWallet } from "@/hooks/useWallet";
 
 const navItems = [
   { label: "Explore", href: "/explore" },
@@ -25,11 +20,7 @@ const navItems = [
 export function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
-  // TODO: Replace with actual wallet connection
-  const isConnected = false;
-  const address = "0x2367...51e8";
-  const reputation = 847;
+  const { isConnected, reputation, tier } = useWallet();
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
@@ -84,38 +75,21 @@ export function Header() {
             >
               <Trophy className="h-4 w-4 text-primary" />
               <span className="font-semibold font-mono-numbers">{reputation}</span>
+              <span className={cn(
+                "text-xs px-1.5 py-0.5 rounded",
+                tier === "Elite" && "bg-purple-500/10 text-purple-500",
+                tier === "Proven" && "bg-blue-500/10 text-blue-500",
+                tier === "New" && "bg-gray-500/10 text-gray-500"
+              )}>
+                {tier}
+              </span>
             </Link>
           )}
 
-          {/* Wallet Button */}
-          {isConnected ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500" />
-                  <span className="font-mono text-xs">{address}</span>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem asChild>
-                  <Link href="/profile">View Profile</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard">Dashboard</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive">
-                  Disconnect
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button className="gap-2 hidden sm:flex">
-              <Wallet className="h-4 w-4" />
-              Connect Wallet
-            </Button>
-          )}
+          {/* Wallet Button - Desktop */}
+          <div className="hidden sm:block">
+            <WalletButton />
+          </div>
 
           {/* Mobile Menu Button */}
           <Button
@@ -161,25 +135,23 @@ export function Header() {
               How it works
             </Link>
             
-            <div className="pt-4 border-t border-border mt-4 space-y-3">
-              {isConnected ? (
-                <>
-                  <div className="flex items-center gap-2 px-4 py-2 text-sm">
-                    <Trophy className="h-4 w-4 text-primary" />
-                    <span className="text-muted-foreground">Reputation:</span>
-                    <span className="font-semibold font-mono-numbers">{reputation}</span>
-                  </div>
-                  <Button variant="outline" className="w-full justify-start gap-2 mx-4">
-                    <div className="w-2 h-2 rounded-full bg-green-500" />
-                    <span className="font-mono text-xs">{address}</span>
-                  </Button>
-                </>
-              ) : (
-                <Button className="w-full gap-2 mx-4">
-                  <Wallet className="h-4 w-4" />
-                  Connect Wallet
-                </Button>
+            <div className="pt-4 border-t border-border mt-4 space-y-3 px-4">
+              {isConnected && (
+                <div className="flex items-center gap-2 py-2 text-sm">
+                  <Trophy className="h-4 w-4 text-primary" />
+                  <span className="text-muted-foreground">Reputation:</span>
+                  <span className="font-semibold font-mono-numbers">{reputation}</span>
+                  <span className={cn(
+                    "text-xs px-1.5 py-0.5 rounded ml-1",
+                    tier === "Elite" && "bg-purple-500/10 text-purple-500",
+                    tier === "Proven" && "bg-blue-500/10 text-blue-500",
+                    tier === "New" && "bg-gray-500/10 text-gray-500"
+                  )}>
+                    {tier}
+                  </span>
+                </div>
               )}
+              <WalletButton className="w-full justify-center" />
             </div>
           </nav>
         </div>
