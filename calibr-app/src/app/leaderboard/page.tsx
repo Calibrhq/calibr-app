@@ -50,40 +50,49 @@ export default function LeaderboardPage() {
           <h1>Leaderboard</h1>
         </div>
         <p className="text-lg text-muted-foreground">
-          Top forecasters ranked by reputation. Calibration is key.
+          Top forecasters ranked by reputation.
         </p>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards - landing-style gradient background (not solid white) */}
       <div className="grid gap-4 sm:grid-cols-3 mb-8">
-        <div className="bg-card border border-border rounded-xl p-5 card-interactive">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-yellow-500/10">
-              <Flame className="h-4 w-4 text-yellow-500" />
+        <div className="relative overflow-hidden bg-card/80 backdrop-blur-sm border border-primary/10 rounded-xl p-5 card-interactive">
+          <div className="absolute inset-0 bg-gradient-radial opacity-40 pointer-events-none" aria-hidden />
+          <div className="relative">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 rounded-lg bg-yellow-500/10">
+                <Flame className="h-4 w-4 text-yellow-500" />
+              </div>
+              <span className="text-sm text-muted-foreground">Top Reputation</span>
             </div>
-            <span className="text-sm text-muted-foreground">Top Reputation</span>
+            <AnimatedCounter value={982} className="text-2xl font-bold" />
           </div>
-          <AnimatedCounter value={982} className="text-2xl font-bold" />
         </div>
         
-        <div className="bg-card border border-border rounded-xl p-5 card-interactive">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-green-500/10">
-              <TrendingUp className="h-4 w-4 text-green-500" />
+        <div className="relative overflow-hidden bg-card/80 backdrop-blur-sm border border-primary/10 rounded-xl p-5 card-interactive">
+          <div className="absolute inset-0 bg-gradient-radial opacity-30 pointer-events-none" aria-hidden />
+          <div className="relative">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 rounded-lg bg-green-500/10">
+                <TrendingUp className="h-4 w-4 text-green-500" />
+              </div>
+              <span className="text-sm text-muted-foreground">Avg Win Rate</span>
             </div>
-            <span className="text-sm text-muted-foreground">Avg Win Rate</span>
+            <AnimatedCounter value={72} suffix="%" className="text-2xl font-bold" />
           </div>
-          <AnimatedCounter value={72} suffix="%" className="text-2xl font-bold" />
         </div>
         
-        <div className="bg-card border border-border rounded-xl p-5 card-interactive">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-purple-500/10">
-              <Crown className="h-4 w-4 text-purple-500" />
+        <div className="relative overflow-hidden bg-card/80 backdrop-blur-sm border border-primary/10 rounded-xl p-5 card-interactive">
+          <div className="absolute inset-0 bg-gradient-radial opacity-30 pointer-events-none" aria-hidden />
+          <div className="relative">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 rounded-lg bg-purple-500/10">
+                <Crown className="h-4 w-4 text-purple-500" />
+              </div>
+              <span className="text-sm text-muted-foreground">Elite Forecasters</span>
             </div>
-            <span className="text-sm text-muted-foreground">Elite Forecasters</span>
+            <AnimatedCounter value={6} className="text-2xl font-bold" />
           </div>
-          <AnimatedCounter value={6} className="text-2xl font-bold" />
         </div>
       </div>
 

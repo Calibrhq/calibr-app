@@ -67,22 +67,23 @@ export function Header() {
           {/* Theme Toggle */}
           <ThemeToggleCompact />
 
-          {/* Reputation Badge (when connected) */}
+          {/* Reputation Badge (when connected) - same height as Connect Wallet button */}
           {isConnected && (
             <Link 
               href="/profile"
-              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary/50 hover:bg-secondary text-sm transition-colors"
+              className="hidden sm:flex items-center justify-center h-10 gap-1.5 px-3 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 text-xs transition-all duration-200"
             >
-              <Trophy className="h-4 w-4 text-primary" />
-              <span className="font-semibold font-mono-numbers">{reputation}</span>
-              <span className={cn(
-                "text-xs px-1.5 py-0.5 rounded",
-                tier === "Elite" && "bg-purple-500/10 text-purple-500",
-                tier === "Proven" && "bg-blue-500/10 text-blue-500",
-                tier === "New" && "bg-gray-500/10 text-gray-500"
-              )}>
-                {tier}
-              </span>
+              <Trophy className="h-4 w-4 text-primary flex-shrink-0" />
+              <span className="font-semibold font-mono-numbers text-primary tabular-nums leading-none">{reputation}</span>
+              {tier !== "New" && (
+                <span className={cn(
+                  "px-1.5 py-0.5 rounded text-[10px] font-medium leading-none",
+                  tier === "Elite" && "bg-primary/15 text-primary",
+                  tier === "Proven" && "bg-primary/10 text-primary/90"
+                )}>
+                  {tier}
+                </span>
+              )}
             </Link>
           )}
 
@@ -137,19 +138,22 @@ export function Header() {
             
             <div className="pt-4 border-t border-border mt-4 space-y-3 px-4">
               {isConnected && (
-                <div className="flex items-center gap-2 py-2 text-sm">
-                  <Trophy className="h-4 w-4 text-primary" />
-                  <span className="text-muted-foreground">Reputation:</span>
-                  <span className="font-semibold font-mono-numbers">{reputation}</span>
-                  <span className={cn(
-                    "text-xs px-1.5 py-0.5 rounded ml-1",
-                    tier === "Elite" && "bg-purple-500/10 text-purple-500",
-                    tier === "Proven" && "bg-blue-500/10 text-blue-500",
-                    tier === "New" && "bg-gray-500/10 text-gray-500"
-                  )}>
-                    {tier}
-                  </span>
-                </div>
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-2 py-2 px-3 rounded-lg border border-primary/20 bg-primary/5 text-sm"
+                >
+                  <Trophy className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                  <span className="font-semibold font-mono-numbers text-primary">{reputation}</span>
+                  {tier !== "New" && (
+                    <span className={cn(
+                      "px-1.5 py-0.5 rounded text-[10px] font-medium ml-1",
+                      tier === "Elite" && "bg-primary/15 text-primary",
+                      tier === "Proven" && "bg-primary/10 text-primary/90"
+                    )}>
+                      {tier}
+                    </span>
+                  )}
+                </Link>
               )}
               <WalletButton className="w-full justify-center" />
             </div>

@@ -85,69 +85,6 @@ export default function ProfilePage() {
             {userStats.netProfitLoss > 0 ? '+' : ''}{userStats.netProfitLoss} pts
           </span>
         </div>
-
-        {/* How Reputation Works */}
-        <div className="mt-12 space-y-6">
-          <h2 className="text-xl font-medium text-center">How Reputation Works</h2>
-          
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="bg-card border border-border rounded-xl p-5">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <span className="text-primary font-medium text-sm">1</span>
-                </div>
-                <div>
-                  <h3 className="font-medium mb-1">Calibrated Wins</h3>
-                  <p className="text-sm text-muted-foreground">
-                    When you&apos;re right at 70% confidence, you gain reputation.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-card border border-border rounded-xl p-5">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <span className="text-primary font-medium text-sm">2</span>
-                </div>
-                <div>
-                  <h3 className="font-medium mb-1">Overconfidence Penalty</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Being wrong at 90% confidence costs more than being wrong at 60%.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-card border border-border rounded-xl p-5">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <span className="text-primary font-medium text-sm">3</span>
-                </div>
-                <div>
-                  <h3 className="font-medium mb-1">Confidence Unlocks</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Higher reputation unlocks higher max confidence levels.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-card border border-border rounded-xl p-5">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <span className="text-primary font-medium text-sm">4</span>
-                </div>
-                <div>
-                  <h3 className="font-medium mb-1">Long-term Focus</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Reputation rewards consistent calibration over time.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

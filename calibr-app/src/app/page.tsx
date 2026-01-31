@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Target, TrendingUp, Shield, Brain, Clock, Award, Sparkles, ChevronRight, Zap } from "lucide-react";
+import { ArrowRight, Target, TrendingUp, Shield, Brain, Clock, Award, ChevronRight, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const features = [
@@ -81,13 +81,6 @@ export default function LandingPage() {
         
         <div className="container relative py-24 md:py-36">
           <div className="max-w-3xl mx-auto text-center">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 rounded-full bg-primary/10 border border-primary/20 animate-fade-in">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Built on Sui</span>
-              <ChevronRight className="h-4 w-4 text-primary/60" />
-            </div>
-            
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight mb-6 text-balance animate-fade-in-up">
               A prediction market for people who care about{" "}
               <span className="text-primary relative">
@@ -188,12 +181,6 @@ export default function LandingPage() {
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {step.description}
                 </p>
-                {index < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-6 left-[calc(100%+0.5rem)] w-[calc(100%-1rem)]">
-                    <div className="h-px bg-gradient-to-r from-primary/50 to-transparent" />
-                    <ChevronRight className="absolute right-0 top-1/2 -translate-y-1/2 h-3 w-3 text-primary/50" />
-                  </div>
-                )}
               </div>
             ))}
           </div>
