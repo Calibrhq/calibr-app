@@ -256,7 +256,27 @@ export default function DashboardPage() {
                 <div className="space-y-3">
                   {activePredictions.map((prediction, index) => {
                     const market = getMarket(prediction.marketId);
-                    const isClaimable = market?.status === "resolved";
+                    const isResolved = market?.status === "resolved";
+
+                    // Logic for button visibility
+                    let showClaim = false;
+                    let claimLabel = "Claim Payout";
+                    let claimVariant = "default"; // green-ish
+
+                    if (isResolved && market && typeof market.outcome === 'boolean') {
+                      const won = prediction.side === market.outcome;
+                      if (won) {
+                        showClaim = true;
+                        claimLabel = "Claim Winnings";
+                      } else if (prediction.risk < prediction.stake) {
+                        showClaim = true;
+                        claimLabel = "Reclaim Stake";
+                        claimVariant = "secondary"; // gray/red-ish hint
+                      }
+                    } else if (isResolved) {
+                      // Fallback if outcome missing
+                      showClaim = true;
+                    }
 
                     return (
                       <div
@@ -264,7 +284,7 @@ export default function DashboardPage() {
                         className="block animate-fade-in"
                         style={{ animationDelay: `${index * 50}ms` }}
                       >
-                        <div className={`bg-card border rounded-xl p-4 transition-colors ${isClaimable ? "border-amber-500/50 shadow-sm" : "border-border"}`}>
+                        <div className={`bg-card border rounded-xl p-4 transition-colors ${showClaim ? "border-amber-500/50 shadow-sm" : "border-border"}`}>
                           <div className="flex items-center justify-between">
                             <div>
                               <Link href={`/market/${prediction.marketId}`} className="hover:underline">
@@ -281,7 +301,7 @@ export default function DashboardPage() {
                               </div>
                             </div>
 
-                            {isClaimable ? (
+                            {showClaim ? (
                               <Button
                                 size="sm"
                                 onClick={(e) => {
@@ -289,13 +309,16 @@ export default function DashboardPage() {
                                   handleClaim(prediction);
                                 }}
                                 disabled={isClaiming}
-                                className="bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border border-amber-500/20"
+                                className={claimVariant === "default"
+                                  ? "bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border border-amber-500/20"
+                                  : "bg-muted text-muted-foreground hover:bg-muted/80 border border-border"
+                                }
                               >
-                                {isClaiming ? <Loader2 className="w-3 h-3 animate-spin" /> : "Claim Payout"}
+                                {isClaiming ? <Loader2 className="w-3 h-3 animate-spin" /> : claimLabel}
                               </Button>
                             ) : (
                               <span className="px-2 py-1 text-xs bg-muted text-muted-foreground rounded">
-                                Active
+                                {isResolved ? "Settled / Lost" : "Active"}
                               </span>
                             )}
                           </div>

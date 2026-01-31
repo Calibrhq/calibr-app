@@ -1,12 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Wallet, Loader2 } from "lucide-react";
+import { Wallet as WalletIcon, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useWallets, useConnectWallet } from "@mysten/dapp-kit";
-import type { WalletWithRequiredFeatures } from "@mysten/dapp-kit";
 
 interface ConnectWalletModalContentProps {
   onClose: () => void;
@@ -17,7 +16,9 @@ export function ConnectWalletModalContent({ onClose }: ConnectWalletModalContent
   const { mutate: connectWallet } = useConnectWallet();
   const [connectingTo, setConnectingTo] = useState<string | null>(null);
 
-  const handleConnect = (wallet: WalletWithRequiredFeatures) => {
+  type SuiWallet = typeof wallets[number];
+
+  const handleConnect = (wallet: SuiWallet) => {
     setConnectingTo(wallet.name);
 
     connectWallet(
@@ -72,7 +73,7 @@ export function ConnectWalletModalContent({ onClose }: ConnectWalletModalContent
                 className="h-5 w-5 shrink-0 rounded"
               />
             ) : (
-              <Wallet className="h-5 w-5 shrink-0 text-primary" />
+              <WalletIcon className="h-5 w-5 shrink-0 text-primary" />
             )}
             <span>{wallet.name}</span>
           </Button>

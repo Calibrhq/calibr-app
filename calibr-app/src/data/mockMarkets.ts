@@ -9,6 +9,7 @@ export interface Market {
   status: "active" | "resolving" | "resolved";
   startDate: string;
   resolveDate: string;
+  outcome?: boolean | null; // true=YES, false=NO, null=Unresolved/None
 }
 
 export const mockMarkets: Market[] = [
