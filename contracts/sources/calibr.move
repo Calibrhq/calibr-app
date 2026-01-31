@@ -146,9 +146,10 @@ module calibr::calibr {
     /// - Resolved: Outcome set, settlements can occur
     /// 
     /// Settlement uses Model 1:
-    /// - Losers fund the pool (their stakes: loser_count × 100)
+    /// - Pool = sum of loser R values (ONLY risked points, NOT full stakes)
     /// - Winners split pool proportional to their R (risk) values
-    /// - Payout = (my_risk / total_winner_risk) × loser_pool
+    /// - Winner payout = stake + (my_risk / total_winner_risk) × loser_pool
+    /// - Loser payout = stake - my_risk (keep protected portion)
     public struct Market has key, store {
         id: UID,
         
@@ -164,11 +165,11 @@ module calibr::calibr {
         no_risk_total: u64,
         
         /// Number of YES predictions placed
-        /// Used to calculate loser pool if NO wins: yes_count × FIXED_STAKE
+        /// Used for statistics and event emission
         yes_count: u64,
         
         /// Number of NO predictions placed
-        /// Used to calculate loser pool if YES wins: no_count × FIXED_STAKE
+        /// Used for statistics and event emission
         no_count: u64,
         
         /// Whether the market is locked (no new predictions allowed)

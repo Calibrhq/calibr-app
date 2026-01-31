@@ -265,6 +265,13 @@ module calibr::market {
         transfer::transfer(admin_cap, tx_context::sender(ctx));
     }
 
+    /// Test-only function to initialize the module.
+    /// This allows tests to create AdminCap without publishing the package.
+    #[test_only]
+    public fun test_init(ctx: &mut TxContext) {
+        init(ctx);
+    }
+
     // ============================================================
     // ADMIN FUNCTIONS
     // ============================================================

@@ -1,5 +1,4 @@
-/// reputation.move
-/// 
+
 /// Model 2: Reputation and calibration tracking.
 /// 
 /// This module handles:
