@@ -7,7 +7,7 @@ import { useEffect, useState, useCallback } from "react";
 import { CountdownTimer } from "@/components/ui/CountdownTimer";
 import { MarketInsightPanel } from "@/components/markets/MarketInsightPanel";
 import { PredictionPanel } from "@/components/markets/PredictionPanel";
-import { ArrowLeft, Clock, Users, FileText, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Clock, Users, FileText, Loader2, AlertCircle, TrendingUp } from "lucide-react";
 import { getPackageId, DEFAULT_NETWORK } from "@/lib/sui-config";
 import { ParsedMarket, parseMarket, decodeQuestion } from "@/lib/calibr-types";
 // ... imports
@@ -186,54 +186,83 @@ export default function MarketDetailPage() {
               <div className="w-1 h-1 rounded-full bg-border" />
               <div className="flex items-center gap-1.5">
                 <Users className="w-4 h-4" />
-                <span>{market.yes_count + market.no_count} votes</span>
+                <span>{market.yesCount + market.noCount} votes</span>
               </div>
             </div>
           </div>
 
           {/* Market Stats */}
           <div className="bg-card border border-border rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Users className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-2 mb-6">
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
               <h3 className="text-sm font-medium text-muted-foreground">
                 Market Statistics
               </h3>
             </div>
 
-            {/* Yes/No Distribution */}
-            <div className="space-y-4">
-              <div className="flex justify-between text-sm">
-                <span className="text-green-600 dark:text-green-400 font-medium">
-                  YES: {market.yesPercentage}%
-                </span>
-                <span className="text-red-600 dark:text-red-400 font-medium">
-                  NO: {100 - market.yesPercentage}%
-                </span>
+            {/* Key Metrics Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Volume</p>
+                <p className="text-xl font-semibold font-mono-numbers">
+                  {(market.yesRiskTotal + market.noRiskTotal).toLocaleString()} pts
+                </p>
               </div>
-              <div className="h-3 bg-muted rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-500"
-                  style={{ width: `${market.yesPercentage}%` }}
-                />
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Predictions</p>
+                <p className="text-xl font-semibold font-mono-numbers">
+                  {market.yesCount + market.noCount}
+                </p>
               </div>
-
-              <div className="grid grid-cols-2 gap-4 pt-4">
-                <div className="text-center p-4 bg-muted/30 rounded-lg">
-                  <p className="text-2xl font-bold font-mono-numbers">{market.yesCount}</p>
-                  <p className="text-xs text-muted-foreground">YES predictions</p>
-                </div>
-                <div className="text-center p-4 bg-muted/30 rounded-lg">
-                  <p className="text-2xl font-bold font-mono-numbers">{market.noCount}</p>
-                  <p className="text-xs text-muted-foreground">NO predictions</p>
-                </div>
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">YES Payout</p>
+                <p className="text-xl font-semibold font-mono-numbers text-green-500">
+                  {market.yesRiskTotal > 0
+                    ? `1:${(1 + (market.noRiskTotal / market.yesRiskTotal)).toFixed(2)}`
+                    : "-"}
+                </p>
               </div>
-
-              <div className="text-center pt-2">
-                <p className="text-sm text-muted-foreground">
-                  Total Risk Pool: <span className="font-mono-numbers font-medium">{market.yesRiskTotal + market.noRiskTotal}</span> pts
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">NO Payout</p>
+                <p className="text-xl font-semibold font-mono-numbers text-red-500">
+                  {market.noRiskTotal > 0
+                    ? `1:${(1 + (market.yesRiskTotal / market.noRiskTotal)).toFixed(2)}`
+                    : "-"}
                 </p>
               </div>
             </div>
+
+            {/* Yes/No Distribution Bar */}
+            <div className="space-y-4">
+              <div className="flex justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-green-500" />
+                  <span className="font-medium text-foreground">YES {market.yesPercentage}%</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-foreground">NO {100 - market.yesPercentage}%</span>
+                  <span className="w-2 h-2 rounded-full bg-red-500" />
+                </div>
+              </div>
+
+              <div className="h-4 bg-muted rounded-full overflow-hidden shadow-inner flex">
+                <div
+                  className="h-full bg-green-500 transition-all duration-500"
+                  style={{ width: `${market.yesPercentage}%` }}
+                />
+                <div
+                  className="h-full bg-red-500 transition-all duration-500"
+                  style={{ width: `${100 - market.yesPercentage}%` }}
+                />
+              </div>
+
+              <div className="flex justify-between text-xs text-muted-foreground pt-1">
+                <span>{market.yesCount} predictions</span>
+                <span>{market.noCount} predictions</span>
+              </div>
+            </div>
+
+
           </div>
 
           {/* Market Info */}
@@ -290,6 +319,6 @@ export default function MarketDetailPage() {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
