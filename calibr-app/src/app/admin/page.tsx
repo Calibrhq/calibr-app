@@ -11,6 +11,7 @@ import {
 } from "@/lib/calibr-transactions";
 import { toast } from "sonner";
 import { Shield, Plus, Lock, Check, X, RefreshCw, Calendar } from "lucide-react";
+import { CountdownTimer } from "@/components/ui/CountdownTimer";
 
 export default function AdminPage() {
     const { isConnected, address, signAndExecuteTransaction } = useWalletContext();
@@ -259,7 +260,7 @@ export default function AdminPage() {
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                        <span>Deadline: {market.resolveDate}</span>
+                                        <CountdownTimer targetDate={market.resolveDate} size="sm" />
                                         <span>ID: {market.id.slice(0, 8)}...</span>
                                     </div>
                                 </div>

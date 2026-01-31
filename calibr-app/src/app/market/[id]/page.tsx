@@ -4,11 +4,14 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
+import { CountdownTimer } from "@/components/ui/CountdownTimer";
 import { MarketInsightPanel } from "@/components/markets/MarketInsightPanel";
 import { PredictionPanel } from "@/components/markets/PredictionPanel";
 import { ArrowLeft, Clock, Users, FileText, Loader2, AlertCircle } from "lucide-react";
 import { getPackageId, DEFAULT_NETWORK } from "@/lib/sui-config";
 import { ParsedMarket, parseMarket, decodeQuestion } from "@/lib/calibr-types";
+// ... imports
+
 
 // Fetch market data from chain
 async function fetchMarketFromChain(marketId: string): Promise<ParsedMarket | null> {

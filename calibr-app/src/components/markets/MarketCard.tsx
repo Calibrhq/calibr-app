@@ -2,6 +2,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ChevronRight, Clock, TrendingUp, Users } from "lucide-react";
+import { CountdownTimer } from "@/components/ui/CountdownTimer";
 
 interface MarketCardProps {
   id: string;
@@ -118,8 +119,7 @@ export function MarketCard({
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 {resolveDate && (
                   <span className="flex items-center gap-1">
-                    <Clock className="h-3.5 w-3.5" />
-                    {formatDate(resolveDate)}
+                    <CountdownTimer targetDate={resolveDate} showIcon={true} />
                   </span>
                 )}
                 {participants && (
