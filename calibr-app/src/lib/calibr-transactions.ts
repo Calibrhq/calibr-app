@@ -125,6 +125,7 @@ export function buildSettlePredictionTx(
 export function buildCreateMarketTx(
     adminCapId: string,
     question: string,
+    deadline: number,
     authority: string
 ): Transaction {
     const tx = new Transaction();
@@ -138,6 +139,7 @@ export function buildCreateMarketTx(
         arguments: [
             tx.object(adminCapId),
             tx.pure.vector('u8', Array.from(questionBytes)),
+            tx.pure.u64(deadline),
             tx.pure.address(authority),
         ],
     });
