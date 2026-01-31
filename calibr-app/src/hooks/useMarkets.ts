@@ -76,15 +76,41 @@ export function useMarkets(category?: string) {
 
                 if (!fields) return null;
 
-                // Decode question
+                // Decode question - comes as array of ASCII codes representing hex string
                 let question = "Unknown Question";
-                if (typeof fields.question === 'string') {
-                    question = fields.question;
-                } else if (Array.isArray(fields.question)) {
+
+                if (Array.isArray(fields.question)) {
                     try {
-                        question = new TextDecoder().decode(new Uint8Array(fields.question));
+                        // Step 1: Convert array of ASCII codes to string (this gives us the hex string)
+                        const hexString = String.fromCharCode(...fields.question);
+
+                        // Step 2: Check if result is a hex-encoded string and decode it
+                        if (/^[0-9a-fA-F]+$/.test(hexString) && hexString.length > 20) {
+                            const bytes = new Uint8Array(
+                                hexString.match(/.{1,2}/g)!.map((byte: string) => parseInt(byte, 16))
+                            );
+                            question = new TextDecoder().decode(bytes);
+                        } else {
+                            // Already plain text
+                            question = hexString;
+                        }
                     } catch (e) {
-                        console.error("Failed to decode question", e);
+                        console.error("Failed to decode question array", e);
+                    }
+                } else if (typeof fields.question === 'string') {
+                    // Check if it's a hex-encoded string
+                    if (/^[0-9a-fA-F]+$/.test(fields.question) && fields.question.length > 20) {
+                        try {
+                            const bytes = new Uint8Array(
+                                fields.question.match(/.{1,2}/g)!.map((byte: string) => parseInt(byte, 16))
+                            );
+                            question = new TextDecoder().decode(bytes);
+                        } catch (e) {
+                            console.error("Failed to decode hex question", e);
+                            question = fields.question;
+                        }
+                    } else {
+                        question = fields.question;
                     }
                 }
 
