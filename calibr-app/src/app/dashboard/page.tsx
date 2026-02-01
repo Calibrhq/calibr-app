@@ -355,30 +355,60 @@ export default function DashboardPage() {
                       style={{ animationDelay: `${index * 50}ms` }}
                     >
                       <div className="bg-card border border-border rounded-xl p-4 hover:border-primary/30 transition-colors">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium text-sm mb-1">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm mb-2 truncate">
                               {getMarket(prediction.marketId)?.question}
                             </p>
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                              <span className={prediction.side ? "text-green-500" : "text-red-500"}>
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                              <span className={prediction.side ? "text-green-500 font-medium" : "text-red-500 font-medium"}>
                                 {prediction.side ? "YES" : "NO"}
                               </span>
                               <span>{prediction.confidence}% confidence</span>
-                              {prediction.profit && (
-                                <span className="text-green-500">+{prediction.profit} pts</span>
-                              )}
-                              {prediction.loss && (
-                                <span className="text-red-500">-{prediction.loss} pts</span>
-                              )}
+                              <span>{prediction.stake} pts staked</span>
                             </div>
                           </div>
-                          <span className={`px-2 py-1 text-xs rounded ${prediction.status === "won"
-                            ? "bg-green-500/10 text-green-500"
-                            : "bg-red-500/10 text-red-500"
-                            }`}>
-                            {prediction.status === "won" ? "Won" : "Lost"}
-                          </span>
+
+                          {/* Results Summary */}
+                          <div className="flex flex-col items-end gap-1 shrink-0">
+                            {/* Points Change */}
+                            <div className="flex items-center gap-2">
+                              {prediction.profit !== undefined && prediction.profit > 0 && (
+                                <span className="text-sm font-bold text-green-600 dark:text-green-400">
+                                  +{prediction.profit} pts
+                                </span>
+                              )}
+                              {prediction.loss !== undefined && prediction.loss > 0 && (
+                                <span className="text-sm font-bold text-red-600 dark:text-red-400">
+                                  -{prediction.loss} pts
+                                </span>
+                              )}
+                              {(!prediction.profit || prediction.profit === 0) && (!prediction.loss || prediction.loss === 0) && (
+                                <span className="text-sm font-medium text-muted-foreground">
+                                  +0 pts
+                                </span>
+                              )}
+                              <span className={`px-2 py-0.5 text-xs font-semibold rounded ${prediction.status === "won"
+                                ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                                : "bg-red-500/10 text-red-600 dark:text-red-400"
+                                }`}>
+                                {prediction.status === "won" ? "WON" : "LOST"}
+                              </span>
+                            </div>
+
+                            {/* Reputation Change */}
+                            {prediction.reputationChange !== undefined && (
+                              <div className="flex items-center gap-1 text-xs">
+                                <span className="text-muted-foreground">Rep:</span>
+                                <span className={prediction.reputationChange >= 0
+                                  ? "text-green-600 dark:text-green-400 font-medium"
+                                  : "text-red-600 dark:text-red-400 font-medium"
+                                }>
+                                  {prediction.reputationChange >= 0 ? "+" : ""}{prediction.reputationChange}
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </Link>

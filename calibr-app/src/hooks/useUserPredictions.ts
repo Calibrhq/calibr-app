@@ -15,6 +15,7 @@ export interface UserPrediction {
     payout?: number;
     profit?: number;
     loss?: number;
+    reputationChange?: number; // positive = gained, negative = lost
 }
 
 // Helper for JSON-RPC calls
@@ -81,10 +82,47 @@ export function useUserPredictions() {
                 }
             }
 
-            // 3. Combine into UserPrediction format
+            // 3. Fetch ReputationUpdated events for this user
+            const reputationEvents = await rpc("suix_queryEvents", [
+                { MoveEventType: `${packageId}::events::ReputationUpdated` },
+                null,
+                100,
+                true
+            ]);
+
+            // Create a map of reputation changes by transaction (keyed by old_score + new_score + confidence)
+            // Since ReputationUpdated doesn't have prediction_id, we match by confidence and timing
+            const reputationMap = new Map<string, any>();
+            if (reputationEvents?.data) {
+                for (const e of reputationEvents.data) {
+                    if (e.parsedJson?.user === address) {
+                        // Use a composite key of confidence + prediction count to match
+                        const key = `${e.parsedJson.prediction_confidence}_${e.parsedJson.prediction_count_after}`;
+                        reputationMap.set(key, e.parsedJson);
+                    }
+                }
+            }
+
+            // 4. Combine into UserPrediction format
             const predictions: UserPrediction[] = userPlacements.map((e: any) => {
                 const placed = e.parsedJson;
                 const settled = settledMap.get(placed.prediction_id);
+
+                // Try to find matching reputation event
+                let reputationChange: number | undefined = undefined;
+                if (settled && reputationEvents?.data) {
+                    // Look for reputation event with matching confidence
+                    const repEvent = reputationEvents.data.find((re: any) =>
+                        re.parsedJson?.user === address &&
+                        parseInt(re.parsedJson?.prediction_confidence) === parseInt(placed.confidence) &&
+                        re.id?.txDigest // Has same tx as settled would be ideal, but we approximate
+                    );
+                    if (repEvent) {
+                        const oldScore = parseInt(repEvent.parsedJson.old_score);
+                        const newScore = parseInt(repEvent.parsedJson.new_score);
+                        reputationChange = newScore - oldScore;
+                    }
+                }
 
                 return {
                     predictionId: placed.prediction_id,
@@ -97,6 +135,7 @@ export function useUserPredictions() {
                     payout: settled ? parseInt(settled.payout) : undefined,
                     profit: settled?.won ? parseInt(settled.profit) : undefined,
                     loss: settled && !settled.won ? parseInt(settled.loss) : undefined,
+                    reputationChange,
                 };
             });
 
