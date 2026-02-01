@@ -64,6 +64,7 @@ export default function ExplorePage() {
                 volume={market.volume}
                 isTrending={market.isTrending}
                 resolveDate={market.resolveDate}
+                status={market.status}
               />
             </div>
           ))}

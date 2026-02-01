@@ -68,7 +68,6 @@ export function useMarkets(category?: string) {
             if (!objectsResult) return [];
 
             // 4. Transform to Market interface
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const markets: Market[] = objectsResult.map((obj: any) => {
                 const id = obj.data?.objectId || "";
                 const content = obj.data?.content;
@@ -148,14 +147,18 @@ export function useMarkets(category?: string) {
                     ? new Date(deadlineMs).toISOString().split('T')[0]
                     : "No deadline";
 
-                // Parse outcome (Option<bool>)
+                // Parse outcome (can be raw boolean or Option<bool>)
                 let outcome: boolean | null = null;
-                if (fields.outcome && typeof fields.outcome === 'object' && 'fields' in fields.outcome) {
-                    // It's a Move Option struct: { fields: { vec: [val] } }
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const vec = (fields.outcome as any).fields?.vec;
-                    if (Array.isArray(vec) && vec.length > 0) {
-                        outcome = vec[0];
+                if (fields.outcome !== null && fields.outcome !== undefined) {
+                    if (typeof fields.outcome === 'boolean') {
+                        // Raw boolean value
+                        outcome = fields.outcome;
+                    } else if (typeof fields.outcome === 'object' && 'fields' in fields.outcome) {
+                        // It's a Move Option struct: { fields: { vec: [val] } }
+                        const vec = (fields.outcome as any).fields?.vec;
+                        if (Array.isArray(vec) && vec.length > 0) {
+                            outcome = vec[0];
+                        }
                     }
                 }
 

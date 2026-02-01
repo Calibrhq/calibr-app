@@ -382,11 +382,11 @@ export default function DashboardPage() {
                           {/* Right: Results Panel */}
                           <div className="shrink-0 flex flex-col items-end gap-2">
                             {/* Outcome Badge */}
-                            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${prediction.status === "won"
-                              ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-sm"
-                              : "bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-sm"
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${prediction.status === "won"
+                              ? "bg-green-500/15 text-green-600 dark:text-green-400 border border-green-500/30"
+                              : "bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30"
                               }`}>
-                              {prediction.status === "won" ? "✓ WON" : "✗ LOST"}
+                              {prediction.status === "won" ? "✓ Won" : "✗ Lost"}
                             </span>
 
                             {/* Points & Rep Changes */}

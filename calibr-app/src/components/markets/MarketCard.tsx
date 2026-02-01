@@ -13,6 +13,7 @@ interface MarketCardProps {
   isTrending?: boolean;
   resolveDate?: string;
   participants?: number;
+  status?: "active" | "resolving" | "resolved";
 }
 
 export function MarketCard({
@@ -24,6 +25,7 @@ export function MarketCard({
   isTrending,
   resolveDate,
   participants,
+  status = "active",
 }: MarketCardProps) {
   const noPercentage = 100 - yesPercentage;
 
@@ -119,7 +121,14 @@ export function MarketCard({
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 {resolveDate && (
                   <span className="flex items-center gap-1">
-                    <CountdownTimer targetDate={resolveDate} showIcon={true} />
+                    {status === "resolved" || status === "resolving" ? (
+                      <span className="flex items-center gap-1 text-red-500">
+                        <Clock className="h-3.5 w-3.5" />
+                        Ended
+                      </span>
+                    ) : (
+                      <CountdownTimer targetDate={resolveDate} showIcon={true} />
+                    )}
                   </span>
                 )}
                 {participants && (
