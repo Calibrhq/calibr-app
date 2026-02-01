@@ -12,11 +12,11 @@ export const NETWORK_URLS: Record<NetworkType, string> = {
 // Deployment addresses per network
 export const CONTRACT_IDS = {
   testnet: {
-    packageId: "0xdb05c1410aacbc50253049280eb64226eef1b78c1f59b2da398a333a7a12aebe",
-    adminCapId: "0xee91dd6333518aa4d450c15b7b2ba79b32c5bc4159352cb0bee96dbfa75bdeb3",
-    treasuryId: "0x261a86c9c5e963ea8a2cd586934519cd3576651badc6c3c77ac432775ba53116",
-    pointsMarketConfigId: "0x4094ea5bc1bd756b90ac1a06a13846b103bfd1c2606d99b6fa0074acd2a9638b",
-    balanceRegistryId: "0x9cd41e2f97564fd4d570a72ddbb33fe1a07280aed46c64c3ca34dbcdf01ce1b5",
+    packageId: "0x6567fe2b950fc8cfbec126d53201c820c03d20558bceda178f1d85f645c6cc20",
+    adminCapId: "0xbdfd6d3a1bff91706ea1fc5fbf4ecece83f30f0a3426f653678e93253f5a2c49",
+    treasuryId: "0x2903eb0693676a627fcf85e99889cf54b629cfd1281145da258e7de671ad73ca",
+    pointsMarketConfigId: "0x09905061f14a72658b45f52a302335188db2b070eeb4fe5be14944326e6ca6e8",
+    balanceRegistryId: "0xbea773000732899e8e198f952c6e0c13fd164fcc6e18e4f28b6088f20caa619d",
   },
   devnet: {
     packageId: "",
