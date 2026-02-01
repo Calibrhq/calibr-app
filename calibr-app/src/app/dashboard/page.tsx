@@ -156,24 +156,16 @@ export default function DashboardPage() {
   return (
     <div className="container py-8 md:py-12">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-10">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-xl bg-primary/10">
-              <LayoutDashboard className="h-5 w-5 text-primary" />
-            </div>
-            <h1 className="mb-0">Dashboard</h1>
+      <div className="mb-10">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="p-2.5 rounded-xl bg-primary/10">
+            <LayoutDashboard className="h-6 w-6 text-primary" />
           </div>
-          <p className="text-muted-foreground">
-            Track your predictions and performance.
-          </p>
+          <h1 className="mb-0">Dashboard</h1>
         </div>
-        <Link href="/explore">
-          <Button className="gap-2">
-            <Target className="h-4 w-4" />
-            New Prediction
-          </Button>
-        </Link>
+        <p className="text-muted-foreground">
+          Track your markets and calibration performance.
+        </p>
       </div>
 
       {isLoading ? (
@@ -243,13 +235,15 @@ export default function DashboardPage() {
           <div className="space-y-10">
             {/* Active Predictions */}
             <section>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-muted-foreground" />
-                  <h2 className="text-xl font-medium">Active Predictions</h2>
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-blue-500/10">
+                    <Clock className="h-4 w-4 text-blue-500" />
+                  </div>
+                  <h2 className="text-xl font-semibold">Active Markets</h2>
                 </div>
-                <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary">
-                  {activePredictions.length} open
+                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                  {activePredictions.length} active
                 </span>
               </div>
               {activePredictions.length > 0 ? (
@@ -279,51 +273,58 @@ export default function DashboardPage() {
                     }
 
                     return (
-                      <div
+                      <Link
                         key={prediction.predictionId}
-                        className="block animate-fade-in"
+                        href={`/market/${prediction.marketId}`}
+                        className="block animate-fade-in group"
                         style={{ animationDelay: `${index * 50}ms` }}
                       >
-                        <div className={`bg-card border rounded-xl p-4 transition-colors ${showClaim ? "border-amber-500/50 shadow-sm" : "border-border"}`}>
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <Link href={`/market/${prediction.marketId}`} className="hover:underline">
-                                <p className="font-medium text-sm mb-1">
-                                  {market?.question || `Market ${prediction.marketId.slice(0, 8)}...`}
-                                </p>
-                              </Link>
-                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                <span className={prediction.side ? "text-green-500" : "text-red-500"}>
-                                  {prediction.side ? "YES" : "NO"}
+                        <div className={`bg-card border rounded-xl p-5 transition-all hover:shadow-md ${showClaim ? "border-amber-500/50 shadow-sm ring-1 ring-amber-500/20" : "border-border hover:border-primary/30"}`}>
+                          <div className="flex items-start justify-between gap-4">
+                            {/* Left: Market Info */}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-base mb-3 group-hover:text-primary transition-colors line-clamp-2">
+                                {market?.question || `Market ${prediction.marketId.slice(0, 8)}...`}
+                              </p>
+
+                              {/* Position & Stats Row */}
+                              <div className="flex flex-wrap items-center gap-3">
+                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ${prediction.side ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-red-500/10 text-red-600 dark:text-red-400"}`}>
+                                  {prediction.side ? "↑ YES" : "↓ NO"}
                                 </span>
-                                <span>{prediction.confidence}% confidence</span>
-                                <span>{prediction.stake} pts staked</span>
+                                <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-md">
+                                  {prediction.confidence}% confident
+                                </span>
+                                <span className="text-xs font-medium text-foreground">
+                                  {prediction.stake} pts at risk
+                                </span>
                               </div>
                             </div>
 
-                            {showClaim ? (
-                              <Button
-                                size="sm"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  handleClaim(prediction);
-                                }}
-                                disabled={isClaiming}
-                                className={claimVariant === "default"
-                                  ? "bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border border-amber-500/20"
-                                  : "bg-muted text-muted-foreground hover:bg-muted/80 border border-border"
-                                }
-                              >
-                                {isClaiming ? <Loader2 className="w-3 h-3 animate-spin" /> : claimLabel}
-                              </Button>
-                            ) : (
-                              <span className="px-2 py-1 text-xs bg-muted text-muted-foreground rounded">
-                                {isResolved ? "Settled / Lost" : "Active"}
-                              </span>
-                            )}
+                            {/* Right: Action */}
+                            <div className="shrink-0">
+                              {showClaim ? (
+                                <Button
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    handleClaim(prediction);
+                                  }}
+                                  disabled={isClaiming}
+                                  className="bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 shadow-sm gap-1.5"
+                                >
+                                  {isClaiming ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Sparkles className="w-3 h-3" /> {claimLabel}</>}
+                                </Button>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                                  Awaiting
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                     )
                   })}
                 </div>
@@ -334,15 +335,17 @@ export default function DashboardPage() {
               )}
             </section>
 
-            {/* Resolved Predictions */}
+            {/* Resolved Markets */}
             <section>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-muted-foreground" />
-                  <h2 className="text-xl font-medium">Recently Resolved</h2>
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-purple-500/10">
+                    <CheckCircle className="h-4 w-4 text-purple-500" />
+                  </div>
+                  <h2 className="text-xl font-semibold">Resolved Markets</h2>
                 </div>
-                <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-secondary text-secondary-foreground">
-                  {resolvedPredictions.length} resolved
+                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                  {resolvedPredictions.length} settled
                 </span>
               </div>
               {resolvedPredictions.length > 0 ? (
@@ -351,63 +354,65 @@ export default function DashboardPage() {
                     <Link
                       key={prediction.predictionId}
                       href={`/market/${prediction.marketId}`}
-                      className="block animate-fade-in"
+                      className="block animate-fade-in group"
                       style={{ animationDelay: `${index * 50}ms` }}
                     >
-                      <div className="bg-card border border-border rounded-xl p-4 hover:border-primary/30 transition-colors">
+                      <div className={`bg-card border rounded-xl p-5 transition-all hover:shadow-md ${prediction.status === "won" ? "border-green-500/30 hover:border-green-500/50" : "border-red-500/20 hover:border-red-500/40"}`}>
                         <div className="flex items-start justify-between gap-4">
+                          {/* Left: Market Info */}
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm mb-2 truncate">
+                            <p className="font-semibold text-base mb-3 group-hover:text-primary transition-colors line-clamp-2">
                               {getMarket(prediction.marketId)?.question}
                             </p>
-                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                              <span className={prediction.side ? "text-green-500 font-medium" : "text-red-500 font-medium"}>
-                                {prediction.side ? "YES" : "NO"}
+
+                            {/* Position & Stats Row */}
+                            <div className="flex flex-wrap items-center gap-3">
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ${prediction.side ? "bg-green-500/10 text-green-600 dark:text-green-400" : "bg-red-500/10 text-red-600 dark:text-red-400"}`}>
+                                {prediction.side ? "↑ YES" : "↓ NO"}
                               </span>
-                              <span>{prediction.confidence}% confidence</span>
-                              <span>{prediction.stake} pts staked</span>
+                              <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-md">
+                                {prediction.confidence}% confident
+                              </span>
+                              <span className="text-xs font-medium text-foreground">
+                                {prediction.stake} pts staked
+                              </span>
                             </div>
                           </div>
 
-                          {/* Results Summary */}
-                          <div className="flex flex-col items-end gap-1 shrink-0">
-                            {/* Points Change */}
-                            <div className="flex items-center gap-2">
-                              {prediction.profit !== undefined && prediction.profit > 0 && (
-                                <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                                  +{prediction.profit} pts
-                                </span>
-                              )}
-                              {prediction.loss !== undefined && prediction.loss > 0 && (
-                                <span className="text-sm font-bold text-red-600 dark:text-red-400">
-                                  -{prediction.loss} pts
-                                </span>
-                              )}
-                              {(!prediction.profit || prediction.profit === 0) && (!prediction.loss || prediction.loss === 0) && (
-                                <span className="text-sm font-medium text-muted-foreground">
-                                  +0 pts
-                                </span>
-                              )}
-                              <span className={`px-2 py-0.5 text-xs font-semibold rounded ${prediction.status === "won"
-                                ? "bg-green-500/10 text-green-600 dark:text-green-400"
-                                : "bg-red-500/10 text-red-600 dark:text-red-400"
-                                }`}>
-                                {prediction.status === "won" ? "WON" : "LOST"}
-                              </span>
-                            </div>
+                          {/* Right: Results Panel */}
+                          <div className="shrink-0 flex flex-col items-end gap-2">
+                            {/* Outcome Badge */}
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${prediction.status === "won"
+                              ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-sm"
+                              : "bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-sm"
+                              }`}>
+                              {prediction.status === "won" ? "✓ WON" : "✗ LOST"}
+                            </span>
 
-                            {/* Reputation Change */}
-                            {prediction.reputationChange !== undefined && (
-                              <div className="flex items-center gap-1 text-xs">
-                                <span className="text-muted-foreground">Rep:</span>
-                                <span className={prediction.reputationChange >= 0
-                                  ? "text-green-600 dark:text-green-400 font-medium"
-                                  : "text-red-600 dark:text-red-400 font-medium"
-                                }>
-                                  {prediction.reputationChange >= 0 ? "+" : ""}{prediction.reputationChange}
-                                </span>
+                            {/* Points & Rep Changes */}
+                            <div className="flex items-center gap-3 text-sm">
+                              {/* Points */}
+                              <div className="flex items-center gap-1">
+                                <Coins className="w-3.5 h-3.5 text-muted-foreground" />
+                                {prediction.profit !== undefined && prediction.profit > 0 ? (
+                                  <span className="font-bold text-green-600 dark:text-green-400">+{prediction.profit}</span>
+                                ) : prediction.loss !== undefined && prediction.loss > 0 ? (
+                                  <span className="font-bold text-red-600 dark:text-red-400">-{prediction.loss}</span>
+                                ) : (
+                                  <span className="font-medium text-muted-foreground">+0</span>
+                                )}
                               </div>
-                            )}
+
+                              {/* Rep */}
+                              {prediction.reputationChange !== undefined && (
+                                <div className="flex items-center gap-1">
+                                  <TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />
+                                  <span className={`font-bold ${prediction.reputationChange >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                                    {prediction.reputationChange >= 0 ? "+" : ""}{prediction.reputationChange}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
