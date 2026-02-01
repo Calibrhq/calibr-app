@@ -1,16 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { ConfidenceSliderEnhanced } from "./ConfidenceSliderEnhanced";
 import { ConfirmationModal } from "./ConfirmationModal";
+import { AlreadyPredictedModal } from "./AlreadyPredictedModal";
 import { cn } from "@/lib/utils";
-import { ThumbsUp, ThumbsDown, Sparkles, AlertCircle, UserPlus, Wallet, Coins } from "lucide-react";
+import { ThumbsUp, ThumbsDown, Sparkles, AlertCircle, UserPlus, Wallet, Coins, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { useWalletContext } from "@/contexts/WalletContext";
 import { buildPlacePredictionWithPointsTx } from "@/lib/points-transactions";
 import { getErrorMessage } from "@/lib/calibr-types";
 import { usePointsBalance } from "@/hooks/usePointsBalance";
+import { useUserPredictions } from "@/hooks/useUserPredictions";
 import { triggerConfetti } from "@/lib/confetti";
 import Link from "next/link";
 
@@ -38,9 +40,19 @@ export function PredictionPanel({ marketId, question }: PredictionPanelProps) {
   // Get user's points balance
   const { data: pointsBalance, refetch: refetchPoints } = usePointsBalance();
 
+  // Get user's predictions to check for duplicates
+  const { data: userPredictions } = useUserPredictions();
+
+  // Check if user already has a prediction on this market
+  const existingPrediction = useMemo(() => {
+    if (!userPredictions) return null;
+    return userPredictions.find(p => p.marketId === marketId);
+  }, [userPredictions, marketId]);
+
   const [selectedSide, setSelectedSide] = useState<"yes" | "no" | null>(null);
   const [confidence, setConfidence] = useState(60);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showAlreadyPredicted, setShowAlreadyPredicted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCreatingProfile, setIsCreatingProfile] = useState(false);
 
@@ -245,6 +257,65 @@ export function PredictionPanel({ marketId, question }: PredictionPanelProps) {
             <Button className="gap-2">
               <Coins className="h-4 w-4" />
               Buy Points
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Already predicted on this market
+  if (existingPrediction) {
+    const sideLabel = existingPrediction.side ? "YES" : "NO";
+    const sideColor = existingPrediction.side ? "text-green-500" : "text-red-500";
+    const sideBg = existingPrediction.side
+      ? "bg-green-500/10 border-green-500/30"
+      : "bg-red-500/10 border-red-500/30";
+
+    return (
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
+        <div className="px-6 py-4 bg-muted/30 border-b border-border">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-blue-500" />
+            <h3 className="font-medium">Prediction Placed</h3>
+          </div>
+        </div>
+        <div className="p-6">
+          {/* Success message */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5 text-blue-500" />
+            </div>
+            <div>
+              <p className="font-medium text-sm">You've already predicted on this market</p>
+              <p className="text-xs text-muted-foreground">One prediction per market ensures fair calibration</p>
+            </div>
+          </div>
+
+          {/* Prediction card */}
+          <div className={`rounded-lg border ${sideBg} p-4 mb-4`}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-muted-foreground">Your Prediction</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/30">
+                Awaiting Resolution
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={`text-xl font-bold ${sideColor}`}>{sideLabel}</span>
+              <span className="text-muted-foreground">@</span>
+              <span className="font-medium">{existingPrediction.confidence}% confidence</span>
+            </div>
+            <div className="flex items-center justify-between mt-3 text-sm">
+              <span className="text-muted-foreground">Risk at stake</span>
+              <span className="font-medium">{existingPrediction.risk} pts</span>
+            </div>
+          </div>
+
+          {/* Dashboard link */}
+          <Link href="/dashboard">
+            <Button variant="outline" className="w-full gap-2">
+              <Sparkles className="h-4 w-4" />
+              View All Predictions
             </Button>
           </Link>
         </div>

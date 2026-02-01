@@ -225,10 +225,34 @@ export function WalletContextProvider({ children }: WalletProviderProps) {
   }, [currentAccount, signAndExecuteTransactionMutation, fetchBalance, fetchUserProfile]);
 
   const createProfile = async () => {
-    // This is handled by a transaction usually.
-    // We defer to the page component to build and execute the tx, then this context just refreshes.
-    await fetchUserProfile();
-    return { success: true };
+    if (!currentAccount) {
+      return { success: false, error: "Wallet not connected" };
+    }
+
+    try {
+      const tx = new Transaction();
+      const packageId = getPackageId(DEFAULT_NETWORK);
+
+      tx.moveCall({
+        target: `${packageId}::reputation::create_profile`,
+        arguments: [],
+      });
+
+      const result = await handleSignAndExecute(tx);
+
+      if (!result) {
+        return { success: false, error: "Transaction failed" };
+      }
+
+      // Wait a bit for indexer/chain update then refresh
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      await fetchUserProfile();
+
+      return { success: true };
+    } catch (error) {
+      console.error("Error creating profile:", error);
+      return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    }
   };
 
   // Derived state

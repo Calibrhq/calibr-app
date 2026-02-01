@@ -140,6 +140,9 @@ module calibr::prediction {
     
     /// Cannot settle - no winner risk total (division by zero)
     const ENoWinnerRisk: u64 = 408;
+    
+    /// User has already predicted on this market
+    const EAlreadyPredicted: u64 = 409;
 
     // ============================================================
     // PREDICTION PLACEMENT
@@ -209,6 +212,13 @@ module calibr::prediction {
             EMarketNotOpen
         );
         
+        // 1b2. Verify user hasn't already predicted on this market
+        // Each user can only make ONE prediction per market
+        assert!(
+            !calibr::has_participant(market, sender),
+            EAlreadyPredicted
+        );
+        
         // 1c. Verify confidence is in valid range [50, 90]
         // This is the fundamental range for the protocol
         assert!(
@@ -255,6 +265,9 @@ module calibr::prediction {
             // User predicted NO
             calibr::add_no_prediction(market, risk);
         };
+        
+        // Register user as having predicted on this market (prevents duplicates)
+        calibr::register_participant(market, sender);
         
         // ============================================================
         // STEP 4: CREATE AND TRANSFER PREDICTION
@@ -724,6 +737,12 @@ module calibr::prediction {
             EMarketNotOpen
         );
         
+        // Verify user hasn't already predicted on this market
+        assert!(
+            !calibr::has_participant(market, sender),
+            EAlreadyPredicted
+        );
+        
         // Validate confidence range
         assert!(
             confidence >= math::min_confidence(),
@@ -757,6 +776,9 @@ module calibr::prediction {
         } else {
             calibr::add_no_prediction(market, risk);
         };
+        
+        // Register user as having predicted on this market (prevents duplicates)
+        calibr::register_participant(market, sender);
         
         // Create prediction
         let prediction = calibr::new_prediction(

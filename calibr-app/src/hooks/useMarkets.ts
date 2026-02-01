@@ -144,7 +144,7 @@ export function useMarkets(category?: string) {
                 // Parse deadline from on-chain data (milliseconds since epoch)
                 const deadlineMs = parseInt(fields.deadline || "0");
                 const resolveDate = deadlineMs > 0
-                    ? new Date(deadlineMs).toISOString().split('T')[0]
+                    ? new Date(deadlineMs).toISOString()
                     : "No deadline";
 
                 // Parse outcome (can be raw boolean or Option<bool>)

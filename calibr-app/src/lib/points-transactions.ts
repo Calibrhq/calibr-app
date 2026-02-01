@@ -246,7 +246,7 @@ export const REDEMPTION_REQUIREMENTS = {
     minReputation: 0,        // Demo: 0, Production: 800 (Proven tier)
     minPredictions: 1,       // Demo: 1, Production: 20
     minEpochsHeld: 0,        // Demo: 0, Production: 4 (~4 weeks)
-    maxWeeklyPct: 10,        // 10% of balance per week
+    maxWeeklyPct: 50,        // 50% of balance per week
     feePct: 5,               // 5% redemption fee
     minRedemption: 100,      // Minimum redeemable
 };

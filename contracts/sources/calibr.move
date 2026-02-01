@@ -16,6 +16,7 @@ module calibr::calibr {
     use sui::object::{Self, UID, ID};
     use sui::tx_context::TxContext;
     use std::option::Option;
+    use sui::table::{Self, Table};
 
     // ============================================================
     // CONSTANTS
@@ -82,6 +83,9 @@ module calibr::calibr {
     
     /// Confidence exceeds user's maximum allowed
     const EConfidenceExceedsMax: u64 = 8;
+    
+    /// User has already predicted on this market
+    const EAlreadyPredicted: u64 = 9;
 
     // ============================================================
     // CORE DATA OBJECTS
@@ -191,6 +195,10 @@ module calibr::calibr {
         /// Address authorized to resolve this market
         /// Typically the market creator or a trusted oracle
         authority: address,
+        
+        /// Tracks which addresses have already placed a prediction
+        /// Prevents the same user from betting multiple times on the same market
+        participants: Table<address, bool>,
     }
 
     /// Prediction - OWNED OBJECT
@@ -331,6 +339,7 @@ module calibr::calibr {
             resolved: false,
             outcome: std::option::none(),
             authority,
+            participants: table::new(ctx),
         }
     }
     
@@ -501,6 +510,20 @@ module calibr::calibr {
     public fun get_no_count(market: &Market): u64 {
         market.no_count
     }
+    
+    /// Check if a user has already placed a prediction on this market
+    public fun has_participant(market: &Market, user: address): bool {
+        table::contains(&market.participants, user)
+    }
+    
+    /// Register a user as having placed a prediction on this market.
+    /// This is a package-internal function to prevent duplicate predictions.
+    public(package) fun register_participant(market: &mut Market, user: address) {
+        table::add(&mut market.participants, user, true);
+    }
+    
+    /// Get the EAlreadyPredicted error code (for use in prediction.move)
+    public fun e_already_predicted(): u64 { EAlreadyPredicted }
     
     // ============================================================
     // ACCESSOR FUNCTIONS - Prediction

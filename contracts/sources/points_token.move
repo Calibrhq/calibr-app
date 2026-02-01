@@ -230,8 +230,8 @@ module calibr::points_token {
             balance.redeemed_this_week
         };
         
-        // 10% of current balance
-        let max_this_week = balance.balance / 10;
+        // 50% of current balance (matched to redemption.move constant)
+        let max_this_week = balance.balance / 2;
         
         let remaining = if (max_this_week > already_redeemed) {
             max_this_week - already_redeemed

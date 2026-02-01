@@ -273,6 +273,7 @@ export const CONTRACT_ERRORS: Record<number, string> = {
     406: "Prediction already settled",
     407: "Prediction does not belong to this market",
     408: "No winner risk total",
+    409: "You have already placed a prediction on this market",
 };
 
 export function getErrorMessage(code: number): string {

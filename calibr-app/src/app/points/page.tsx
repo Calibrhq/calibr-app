@@ -80,7 +80,7 @@ export default function PointsPage() {
 
     // Eligibility check (simplified - real check happens on-chain)
     const currentBalance = pointsBalance?.balance || 0;
-    const maxRedeemable = Math.floor(currentBalance * 0.1 / 100) * 100; // 10% limit, rounded to 100
+    const maxRedeemable = Math.floor((currentBalance * REDEMPTION_REQUIREMENTS.maxWeeklyPct / 100) / 100) * 100;
     const meetsReputationReq = reputation >= REDEMPTION_REQUIREMENTS.minReputation;
     // Note: We can't check predictions count or epochs held from frontend easily
     // The contract will validate on-chain
