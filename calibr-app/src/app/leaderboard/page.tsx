@@ -1,10 +1,14 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useWallet } from "@/hooks/useWallet";
-import { useLeaderboard } from "@/hooks/useLeaderboard";
+import { useLeaderboard, TimeFrame } from "@/hooks/useLeaderboard";
 import { cn } from "@/lib/utils";
-import { Trophy, Medal, Award, TrendingUp, Crown, Flame, Target } from "lucide-react";
+import { Trophy, Medal, Award, TrendingUp, Crown, Flame, Target, Sparkles } from "lucide-react";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
+
+const timeFrames: TimeFrame[] = ["All Time", "This Week", "This Month"];
 
 const tierConfig = {
   elite: { label: "Elite", color: "text-purple-500", bg: "bg-purple-500/10", icon: Crown },
@@ -13,15 +17,18 @@ const tierConfig = {
 };
 
 function getRankIcon(rank: number) {
-  if (rank === 1) return <Trophy className="h-5 w-5 text-yellow-500" />;
-  if (rank === 2) return <Medal className="h-5 w-5 text-gray-400" />;
-  if (rank === 3) return <Medal className="h-5 w-5 text-amber-600" />;
+  // Always return the number, conditioned with color for top 3 if desired, or just plain text
+  if (rank === 1) return <span className="text-xl font-bold font-mono-numbers text-yellow-500">1</span>;
+  if (rank === 2) return <span className="text-xl font-bold font-mono-numbers text-gray-400">2</span>;
+  if (rank === 3) return <span className="text-xl font-bold font-mono-numbers text-amber-600">3</span>;
   return <span className="text-sm text-muted-foreground font-mono-numbers w-5 text-center">{rank}</span>;
 }
 
 export default function LeaderboardPage() {
+  const router = useRouter();
   const { address } = useWallet();
-  const { data: leaderboardData, isLoading } = useLeaderboard(address);
+  const [timeFrame, setTimeFrame] = useState<TimeFrame>("All Time");
+  const { data: leaderboardData, isLoading } = useLeaderboard(address, timeFrame);
 
   // Stats for cards (derived from real data)
   const topRep = leaderboardData && leaderboardData.length > 0 ? leaderboardData[0].reputation : 0;
@@ -30,6 +37,10 @@ export default function LeaderboardPage() {
     ? Math.round(leaderboardData.reduce((acc, user) => acc + user.winRate, 0) / leaderboardData.length)
     : 0;
 
+  // Calculate total PnL of platform (sum of all positive PnLs?) or just max earner?
+  // Let's show "Top Earner" PnL or Platform Volume? 
+  // Existing card is "Elite Forecasters". Let's keep it or change to "Highest Streak"?
+  // Let's keep Elite count for now.
   const eliteCount = leaderboardData ? leaderboardData.filter(u => u.tier === "elite").length : 0;
 
   // Find current user rank
@@ -46,7 +57,7 @@ export default function LeaderboardPage() {
           <h1>Leaderboard</h1>
         </div>
         <p className="text-lg text-muted-foreground">
-          Top forecasters ranked by reputation.
+          Top forecasters ranked by {timeFrame === "All Time" ? "reputation" : "earnings"}.
         </p>
       </div>
 
@@ -104,16 +115,34 @@ export default function LeaderboardPage() {
         </div>
       </div>
 
+      {/* Time Frame Filters */}
+      <div className="flex gap-2 mb-6">
+        {timeFrames.map((tf) => (
+          <button
+            key={tf}
+            onClick={() => setTimeFrame(tf)}
+            className={cn(
+              "px-4 py-2 text-sm font-medium rounded-lg transition-all",
+              timeFrame === tf
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            )}
+          >
+            {tf}
+          </button>
+        ))}
+      </div>
+
       {/* Leaderboard Table */}
       <div className="bg-card border border-border rounded-xl overflow-hidden min-h-[300px]">
         {/* Header */}
         <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-muted/50 text-sm font-medium text-muted-foreground border-b border-border">
           <div className="col-span-1">Rank</div>
-          <div className="col-span-4">Forecaster</div>
+          <div className="col-span-4 md:col-span-3">Forecaster</div>
           <div className="col-span-2 text-right">Reputation</div>
-          <div className="col-span-2 text-right hidden sm:block">Predictions</div>
+          <div className="col-span-2 text-right hidden md:block text-muted-foreground">Earnings</div>
           <div className="col-span-2 text-right hidden sm:block">Win Rate</div>
-          <div className="col-span-1 text-right">Tier</div>
+          <div className="col-span-1 text-right hidden md:block">Streak</div>
         </div>
 
         {/* Rows */}
@@ -123,30 +152,31 @@ export default function LeaderboardPage() {
             Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="grid grid-cols-12 gap-4 px-6 py-4 items-center animate-pulse">
                 <div className="col-span-1 text-center"><div className="mx-auto w-5 h-5 bg-muted rounded-full" /></div>
-                <div className="col-span-4 flex items-center gap-3">
+                <div className="col-span-4 md:col-span-3 flex items-center gap-3">
                   <div className="w-10 h-10 bg-muted rounded-full" />
-                  <div className="w-32 h-4 bg-muted rounded" />
+                  <div className="w-24 h-4 bg-muted rounded" />
                 </div>
                 <div className="col-span-2"><div className="ml-auto w-12 h-6 bg-muted rounded" /></div>
-                <div className="col-span-2 hidden sm:block"><div className="ml-auto w-8 h-6 bg-muted rounded" /></div>
+                <div className="col-span-2 hidden md:block"><div className="ml-auto w-16 h-6 bg-muted rounded" /></div>
                 <div className="col-span-2 hidden sm:block"><div className="ml-auto w-10 h-6 bg-muted rounded" /></div>
-                <div className="col-span-1"><div className="ml-auto w-16 h-6 bg-muted rounded" /></div>
+                <div className="col-span-1 hidden md:block"><div className="ml-auto w-8 h-6 bg-muted rounded" /></div>
               </div>
             ))
           ) : !leaderboardData || leaderboardData.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground">
-              No active forecasters yet. Be the first!
+              No active forecasters for this period.
             </div>
           ) : (
             leaderboardData.map((user, index) => {
               const tierInfo = tierConfig[user.tier];
-              const TierIcon = tierInfo.icon;
+              // const TierIcon = tierInfo.icon;
 
               return (
                 <div
                   key={user.address}
+                  onClick={() => router.push(`/profile/${user.address}`)}
                   className={cn(
-                    "grid grid-cols-12 gap-4 px-6 py-4 items-center transition-colors hover:bg-muted/30",
+                    "grid grid-cols-12 gap-4 px-6 py-4 items-center transition-colors hover:bg-muted/30 cursor-pointer",
                     user.isYou && "bg-primary/5 hover:bg-primary/10",
                     "animate-fade-in"
                   )}
@@ -157,8 +187,8 @@ export default function LeaderboardPage() {
                     {getRankIcon(user.rank)}
                   </div>
 
-                  {/* Address */}
-                  <div className="col-span-4 flex items-center gap-3">
+                  {/* Address & Tier */}
+                  <div className="col-span-4 md:col-span-3 flex items-center gap-3">
                     <div className={cn(
                       "w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium",
                       user.rank <= 3
@@ -167,15 +197,21 @@ export default function LeaderboardPage() {
                     )}>
                       {user.address.slice(2, 4).toUpperCase()}
                     </div>
-                    <div>
-                      <span className="font-mono text-sm">
-                        {user.address.slice(0, 6)}...{user.address.slice(-4)}
-                      </span>
-                      {user.isYou && (
-                        <span className="ml-2 px-2 py-0.5 text-xs font-medium rounded-full bg-primary/10 text-primary">
-                          You
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-sm font-medium">
+                          {user.address.slice(0, 6)}...
                         </span>
-                      )}
+                        {user.isYou && (
+                          <span className="px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-primary/10 text-primary">
+                            YOU
+                          </span>
+                        )}
+                      </div>
+                      {/* Tiny tier badge below name */}
+                      <span className={cn("text-[10px]", tierInfo.color)}>
+                        {tierInfo.label}
+                      </span>
                     </div>
                   </div>
 
@@ -184,9 +220,14 @@ export default function LeaderboardPage() {
                     <span className="text-lg font-bold font-mono-numbers">{user.reputation}</span>
                   </div>
 
-                  {/* Predictions */}
-                  <div className="col-span-2 text-right hidden sm:block">
-                    <span className="font-mono-numbers text-muted-foreground">{user.predictions}</span>
+                  {/* Earnings (PnL) */}
+                  <div className="col-span-2 text-right hidden md:block">
+                    <span className={cn(
+                      "font-mono-numbers font-medium",
+                      user.pnl > 0 ? "text-green-500" : user.pnl < 0 ? "text-red-500" : "text-muted-foreground"
+                    )}>
+                      {user.pnl > 0 ? "+" : ""}{user.pnl.toFixed(1)} <span className="text-xs text-muted-foreground">SUI</span>
+                    </span>
                   </div>
 
                   {/* Win Rate */}
@@ -199,15 +240,14 @@ export default function LeaderboardPage() {
                     </span>
                   </div>
 
-                  {/* Tier */}
-                  <div className="col-span-1 flex justify-end">
-                    <div className={cn(
-                      "flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium",
-                      tierInfo.bg, tierInfo.color
-                    )}>
-                      <TierIcon className="h-3 w-3" />
-                      <span className="hidden md:inline">{tierInfo.label}</span>
-                    </div>
+                  {/* Streak */}
+                  <div className="col-span-1 text-right hidden md:block">
+                    {user.streak > 1 ? (
+                      <div className="flex items-center justify-end gap-1 text-orange-500 font-bold text-sm">
+                        <Flame className="w-3 h-3 fill-orange-500" />
+                        {user.streak}
+                      </div>
+                    ) : <span className="text-muted-foreground text-xs">-</span>}
                   </div>
                 </div>
               );
@@ -216,29 +256,11 @@ export default function LeaderboardPage() {
         </div>
       </div>
 
-      {/* Your Rank Card */}
-      {userRank && (
-        <div className="mt-8 bg-card border border-primary/30 rounded-xl p-6 animate-fade-in">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="font-bold font-mono-numbers text-primary">#{userRank.rank}</span>
-              </div>
-              <div>
-                <p className="font-medium">Your Ranking</p>
-                <p className="text-sm text-muted-foreground">
-                  {userRank.tier === "elite" ? "Elite Tier Forecaster" : userRank.tier === "proven" ? "Proven Forecaster" : "New Forecaster"}
-                </p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-2xl font-bold font-mono-numbers">{userRank.reputation}</p>
-              <p className="text-sm text-muted-foreground">Reputation</p>
-            </div>
-          </div>
-          {/* Progress bar logic could be added here if we knew next threshold */}
-        </div>
-      )}
+      {/* Footer / Legend */}
+      <div className="mt-4 flex gap-4 text-xs text-muted-foreground justify-center">
+        <div className="flex items-center gap-1"><Flame className="w-3 h-3 text-orange-500" /> Win Streak</div>
+      </div>
+
     </div>
   );
 }

@@ -39,8 +39,9 @@ async function rpc(method: string, params: unknown[]): Promise<any> {
     return json.result;
 }
 
-export function useUserPredictions() {
-    const { address } = useWallet();
+export function useUserPredictions(overrideAddress?: string) {
+    const { address: walletAddress } = useWallet();
+    const address = overrideAddress || walletAddress;
     const packageId = getPackageId(DEFAULT_NETWORK);
 
     return useQuery({
