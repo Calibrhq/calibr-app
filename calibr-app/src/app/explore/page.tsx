@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { MarketCard } from "@/components/markets/MarketCard";
+import { MarketCardSkeleton } from "@/components/ui/skeleton";
 import { useMarkets } from "@/hooks/useMarkets";
 import { cn } from "@/lib/utils";
 
@@ -44,8 +45,8 @@ export default function ExplorePage() {
 
       {isLoading ? (
         <div className="grid gap-5 md:grid-cols-2">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-[200px] rounded-xl bg-muted/20 animate-pulse" />
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <MarketCardSkeleton key={i} />
           ))}
         </div>
       ) : (

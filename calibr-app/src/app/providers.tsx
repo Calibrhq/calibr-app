@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { SuiProvider } from "@/components/providers/SuiProvider";
 import { WalletContextProvider } from "@/contexts/WalletContext";
+import { OnboardingTourProvider } from "@/components/ui/OnboardingTour";
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
@@ -19,9 +20,11 @@ export function Providers({ children }: { children: ReactNode }) {
       <SuiProvider>
         <WalletContextProvider>
           <TooltipProvider delayDuration={200}>
-            {children}
+            <OnboardingTourProvider>
+              {children}
+            </OnboardingTourProvider>
             <Toaster />
-            <Sonner 
+            <Sonner
               position="bottom-right"
               toastOptions={{
                 classNames: {

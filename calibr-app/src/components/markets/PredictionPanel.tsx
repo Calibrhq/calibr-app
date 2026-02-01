@@ -11,6 +11,7 @@ import { useWalletContext } from "@/contexts/WalletContext";
 import { buildPlacePredictionWithPointsTx } from "@/lib/points-transactions";
 import { getErrorMessage } from "@/lib/calibr-types";
 import { usePointsBalance } from "@/hooks/usePointsBalance";
+import { triggerConfetti } from "@/lib/confetti";
 import Link from "next/link";
 
 interface PredictionPanelProps {
@@ -123,6 +124,9 @@ export function PredictionPanel({ marketId, question }: PredictionPanelProps) {
       const result = await signAndExecuteTransaction(tx);
 
       if (result) {
+        // 🎉 Trigger confetti celebration!
+        triggerConfetti({ type: "success" });
+
         toast.success("Prediction placed!", {
           description: `${selectedSide.toUpperCase()} at ${confidence}% confidence`,
           duration: 4000,

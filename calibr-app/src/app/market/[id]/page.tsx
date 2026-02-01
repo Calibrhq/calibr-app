@@ -8,7 +8,7 @@ import { CountdownTimer } from "@/components/ui/CountdownTimer";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { MarketInsightPanel } from "@/components/markets/MarketInsightPanel";
 import { PredictionPanel } from "@/components/markets/PredictionPanel";
-import { ArrowLeft, Clock, Users, FileText, Loader2, AlertCircle, TrendingUp } from "lucide-react";
+import { ArrowLeft, Clock, Users, FileText, Loader2, AlertCircle, TrendingUp, ExternalLink } from "lucide-react";
 import { getPackageId, DEFAULT_NETWORK } from "@/lib/sui-config";
 import { ParsedMarket, parseMarket, decodeQuestion } from "@/lib/calibr-types";
 // ... imports
@@ -189,6 +189,16 @@ export default function MarketDetailPage() {
                 <Users className="w-4 h-4" />
                 <span>{market.yesCount + market.noCount} votes</span>
               </div>
+              <div className="w-1 h-1 rounded-full bg-border" />
+              <a
+                href={`https://suiscan.xyz/testnet/object/${id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-primary/80 hover:text-primary transition-colors"
+              >
+                <ExternalLink className="w-4 h-4" />
+                <span>View on Explorer</span>
+              </a>
             </div>
           </div>
 

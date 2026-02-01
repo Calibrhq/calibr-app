@@ -197,15 +197,27 @@ export function ConfidenceSliderEnhanced({
       <div className="space-y-2">
         <div className="flex justify-between text-xs text-muted-foreground">
           <span>Risk at stake</span>
-          <span className="font-mono-numbers font-medium text-foreground">{risk} pts</span>
+          <span className={cn(
+            "font-mono-numbers font-bold tabular-nums transition-colors duration-300",
+            riskInfo.color
+          )}>{risk} pts</span>
         </div>
-        <div className="h-2 rounded-full bg-muted overflow-hidden">
+        <div className="h-3 rounded-full bg-muted overflow-hidden shadow-inner">
           <div
-            className="h-full rounded-full transition-all duration-300 bg-primary/80"
-            style={{ width: `${risk}%` }}
+            className="h-full rounded-full transition-all duration-500 ease-out shadow-sm"
+            style={{
+              width: `${risk}%`,
+              background: value <= 60
+                ? "linear-gradient(90deg, #22c55e, #4ade80)"
+                : value <= 75
+                  ? "linear-gradient(90deg, #eab308, #facc15)"
+                  : value <= 85
+                    ? "linear-gradient(90deg, #f97316, #fb923c)"
+                    : "linear-gradient(90deg, #ef4444, #f87171)",
+            }}
           />
         </div>
-        <p className={cn("text-xs", riskInfo.color)}>
+        <p className={cn("text-xs font-medium transition-colors duration-300", riskInfo.color)}>
           {riskInfo.description}
         </p>
       </div>
