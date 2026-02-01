@@ -106,13 +106,26 @@ export default function PointsPage() {
                 return;
             }
 
+            // Add 10% buffer to cost estimate to account for bonding curve price increases
+            const costWithBuffer = Math.ceil(estimatedCostMist * 1.1);
+
+            console.log("💰 Buy Points Debug:", {
+                pointsToBuy,
+                estimatedCostMist,
+                costWithBuffer,
+                hasExistingBalance: !!pointsBalance,
+                balanceId: pointsBalance?.id,
+                treasury: economyIds.treasury,
+                marketConfig: economyIds.marketConfig,
+            });
+
             let tx;
             if (pointsBalance) {
                 tx = buildBuyPointsTx(
                     economyIds.treasury,
                     economyIds.marketConfig,
                     pointsBalance.id,
-                    estimatedCostMist,
+                    costWithBuffer,
                     pointsToBuy
                 );
             } else {
@@ -125,7 +138,7 @@ export default function PointsPage() {
                     economyIds.treasury,
                     economyIds.marketConfig,
                     economyIds.balanceRegistry,
-                    estimatedCostMist,
+                    costWithBuffer,
                     pointsToBuy
                 );
             }
@@ -135,9 +148,17 @@ export default function PointsPage() {
             if (result && result.digest) {
                 toast.success(`Successfully purchased ${pointsToBuy} points!`);
             }
-        } catch (error) {
-            console.error(error);
-            toast.error("Transaction failed");
+        } catch (error: any) {
+            console.error("Buy points error:", error);
+            // Try to extract useful error message
+            const errorMsg = error?.message || "Transaction failed";
+            if (errorMsg.includes("513")) {
+                toast.error("You already have a points balance. Please refresh the page.");
+            } else if (errorMsg.includes("510")) {
+                toast.error("Insufficient payment. Try a smaller amount.");
+            } else {
+                toast.error(errorMsg.substring(0, 100));
+            }
         } finally {
             setIsBuying(false);
         }
