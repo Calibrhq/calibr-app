@@ -46,13 +46,13 @@ export function MarketInsightPanel({
           </div>
         </div>
         <div className="confidence-bar-horizontal">
-          <div 
-            className="confidence-bar-yes" 
-            style={{ width: `${yesPercentage}%` }} 
+          <div
+            className="confidence-bar-yes"
+            style={{ width: `${yesPercentage}%` }}
           />
-          <div 
-            className="confidence-bar-no" 
-            style={{ width: `${noPercentage}%` }} 
+          <div
+            className="confidence-bar-no"
+            style={{ width: `${noPercentage}%` }}
           />
         </div>
       </div>

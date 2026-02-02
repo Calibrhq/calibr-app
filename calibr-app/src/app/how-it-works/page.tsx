@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Target, Sliders, Shield, TrendingUp, AlertTriangle, Brain, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PredictionSimulator } from "@/components/ui/PredictionSimulator";
 
 const principles = [
   {
@@ -101,26 +102,15 @@ export default function HowItWorksPage() {
           ))}
         </div>
 
-        {/* Examples */}
+        {/* Interactive Simulator */}
         <div className="mb-16">
-          <h2 className="text-xl font-medium text-center mb-8">See It In Action</h2>
-          <div className="space-y-4">
-            {examples.map((example, index) => (
-              <div key={index} className="bg-card border border-border rounded-xl p-5">
-                <p className="font-medium mb-3">{example.scenario}</p>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <div className="flex items-start gap-2">
-                    <Zap className="h-4 w-4 text-success flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-muted-foreground">{example.outcome}</p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-muted-foreground">{example.detail}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="text-center mb-8">
+            <h2 className="text-xl font-medium mb-2">Simulate Your Risk</h2>
+            <p className="text-muted-foreground">
+              See how confidence affects your potential returns and penalties.
+            </p>
           </div>
+          <PredictionSimulator />
         </div>
 
         {/* How Reputation Works (moved from Profile) */}

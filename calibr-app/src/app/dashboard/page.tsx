@@ -1,7 +1,10 @@
 "use client";
 
+import { CalibrationGauge } from "@/components/ui/CalibrationGauge";
+
 import { StatCard } from "@/components/dashboard/StatCard";
 import { NoActivePredictions, NoPredictions } from "@/components/ui/empty-state";
+import { StatCardSkeleton, PredictionRowSkeleton } from "@/components/ui/skeleton-cards";
 import { Target, Percent, Trophy, TrendingUp, LayoutDashboard, Clock, CheckCircle, Coins, Loader2, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -169,8 +172,23 @@ export default function DashboardPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <div className="space-y-12">
+          {/* Stats Skeletons */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            {[...Array(5)].map((_, i) => (
+              <StatCardSkeleton key={i} />
+            ))}
+          </div>
+
+          {/* Active Markets Skeletons */}
+          <div className="space-y-4">
+            <div className="h-8 w-48 bg-muted rounded-lg animate-pulse" />
+            <div className="space-y-3">
+              {[...Array(3)].map((_, i) => (
+                <PredictionRowSkeleton key={i} />
+              ))}
+            </div>
+          </div>
         </div>
       ) : (
         <>
@@ -224,12 +242,33 @@ export default function DashboardPage() {
               icon={Trophy}
               trend={stats.winRate >= 50 ? "up" : undefined}
             />
-            <StatCard
-              label="Reputation"
-              value={reputation}
-              icon={TrendingUp}
-              sublabel={tier !== "New" ? tier : undefined}
-            />
+            {/* Enhanced Reputation Card with CalibrationGauge */}
+            <div className="bg-card border border-border rounded-xl p-6 relative overflow-hidden group hover:shadow-lg transition-all duration-300">
+              <div className="flex items-center justify-between mb-4 relative z-10">
+                <span className="text-sm font-medium text-muted-foreground">Reputation</span>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </div>
+
+              <div className="flex flex-col items-center justify-center py-2 relative z-10">
+                <CalibrationGauge
+                  score={reputation}
+                  size="md"
+                  showLabel={true}
+                  animated={true}
+                />
+              </div>
+
+              {/* Background Glow Effect */}
+              <div
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                style={{
+                  background: `radial-gradient(circle at center, ${reputation > 850 ? 'rgba(168, 85, 247, 0.1)' :
+                    reputation >= 700 ? 'rgba(59, 130, 246, 0.1)' :
+                      'rgba(148, 163, 184, 0.05)'
+                    } 0%, transparent 70%)`
+                }}
+              />
+            </div>
           </div>
 
           <div className="space-y-10">

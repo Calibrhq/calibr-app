@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { MarketCard } from "@/components/markets/MarketCard";
-import { MarketCardSkeleton } from "@/components/ui/skeleton";
+import { MarketCardSkeleton } from "@/components/ui/skeleton-cards";
 import { useMarkets } from "@/hooks/useMarkets";
 import { cn } from "@/lib/utils";
 

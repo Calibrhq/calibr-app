@@ -11,6 +11,7 @@ import { PredictionPanel } from "@/components/markets/PredictionPanel";
 import { ArrowLeft, Clock, Users, FileText, Loader2, AlertCircle, TrendingUp, ExternalLink } from "lucide-react";
 import { getPackageId, DEFAULT_NETWORK } from "@/lib/sui-config";
 import { ParsedMarket, parseMarket, decodeQuestion } from "@/lib/calibr-types";
+import { AIPulse } from "@/components/markets/AIPulse";
 // ... imports
 
 
@@ -142,18 +143,7 @@ export default function MarketDetailPage() {
   const status = getStatus();
 
   const getStatusBadge = () => {
-    switch (status) {
-      case "active":
-        return <span className="badge-active">Active</span>;
-      case "resolving":
-        return <span className="badge-resolving">Locked</span>;
-      case "resolved":
-        return (
-          <span className="badge-resolved">
-            Resolved: {market.outcome === true ? "YES" : market.outcome === false ? "NO" : "Unknown"}
-          </span>
-        );
-    }
+    return <AIPulse status={status} />;
   };
 
   return (

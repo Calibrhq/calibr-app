@@ -106,11 +106,9 @@ export function ConfidenceSliderEnhanced({
               <TooltipTrigger>
                 <Info className="h-4 w-4 text-muted-foreground" />
               </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                <p className="text-sm">
-                  Higher confidence = higher risk. The formula is:
-                  <br />
-                  <code className="text-xs bg-muted px-1 rounded">Risk = max(5, 100 × (c - 50) / 40)</code>
+              <TooltipContent className="w-60" side="top" align="start">
+                <p className="text-xs text-muted-foreground">
+                  Your confidence is capped at <span className="text-foreground font-medium">{maxValue}%</span> based on your reputation.
                 </p>
               </TooltipContent>
             </Tooltip>
