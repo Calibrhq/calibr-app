@@ -53,6 +53,8 @@ export function MarketCard({
       )}>
         {/* Gradient overlay on hover */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+        {/* Shine effect */}
+        <div className="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent z-10 pointer-events-none" />
 
         <div className="relative">
           <div className="flex items-start justify-between gap-4 mb-4">
@@ -82,15 +84,17 @@ export function MarketCard({
 
           <div className="space-y-3 mt-auto">
             {/* Enhanced probability bar */}
-            <div className="h-3 bg-muted rounded-full overflow-hidden shadow-inner">
+            <div className="h-3 bg-muted rounded-full overflow-hidden shadow-inner relative">
               <div
                 className={cn(
-                  "h-full rounded-full transition-all duration-500 ease-out",
+                  "h-full rounded-full transition-all duration-500 ease-out relative overflow-hidden",
                   "bg-gradient-to-r from-green-500 to-green-400",
                   "group-hover:shadow-[0_0_10px_rgba(34,197,94,0.5)]"
                 )}
                 style={{ width: `${yesPercentage}%` }}
-              />
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] animate-[shimmer_2s_infinite]" />
+              </div>
             </div>
 
             <div className="flex justify-between items-center">

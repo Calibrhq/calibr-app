@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useWallet } from "@/hooks/useWallet";
 import { useLeaderboard, TimeFrame } from "@/hooks/useLeaderboard";
 import { cn } from "@/lib/utils";
-import { Trophy, Medal, Award, TrendingUp, Crown, Flame, Target, Sparkles } from "lucide-react";
+import { Trophy, Medal, Award, TrendingUp, Crown, Flame, Target, Sparkles, ChevronRight } from "lucide-react";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
 
 const timeFrames: TimeFrame[] = ["All Time", "This Week", "This Month"];
@@ -17,11 +17,10 @@ const tierConfig = {
 };
 
 function getRankIcon(rank: number) {
-  // Always return the number, conditioned with color for top 3 if desired, or just plain text
-  if (rank === 1) return <span className="text-xl font-bold font-mono-numbers text-yellow-500">1</span>;
-  if (rank === 2) return <span className="text-xl font-bold font-mono-numbers text-gray-400">2</span>;
-  if (rank === 3) return <span className="text-xl font-bold font-mono-numbers text-amber-600">3</span>;
-  return <span className="text-sm text-muted-foreground font-mono-numbers w-5 text-center">{rank}</span>;
+  if (rank === 1) return <div className="relative flex justify-center"><Medal className="w-6 h-6 text-yellow-500 fill-yellow-500/20" /><span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-yellow-700 dark:text-yellow-600 pt-0.5">1</span></div>;
+  if (rank === 2) return <div className="relative flex justify-center"><Medal className="w-6 h-6 text-slate-400 fill-slate-400/20" /><span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-slate-600 dark:text-slate-700 pt-0.5">2</span></div>;
+  if (rank === 3) return <div className="relative flex justify-center"><Medal className="w-6 h-6 text-amber-600 fill-amber-600/20" /><span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-amber-800 dark:text-amber-700 pt-0.5">3</span></div>;
+  return <span className="text-sm font-mono font-medium text-muted-foreground w-6 text-center">{rank}</span>;
 }
 
 export default function LeaderboardPage() {
@@ -169,18 +168,24 @@ export default function LeaderboardPage() {
           ) : (
             leaderboardData.map((user, index) => {
               const tierInfo = tierConfig[user.tier];
-              // const TierIcon = tierInfo.icon;
+
+              const rankStyles: Record<number, string> = {
+                1: "bg-gradient-to-r from-yellow-500/10 via-transparent to-transparent border-l-2 border-l-yellow-500",
+                2: "bg-gradient-to-r from-slate-400/10 via-transparent to-transparent border-l-2 border-l-slate-400",
+                3: "bg-gradient-to-r from-amber-600/10 via-transparent to-transparent border-l-2 border-l-amber-600"
+              };
 
               return (
                 <div
                   key={user.address}
                   onClick={() => router.push(`/profile/${user.address}`)}
                   className={cn(
-                    "grid grid-cols-12 gap-4 px-6 py-4 items-center transition-colors hover:bg-muted/30 cursor-pointer",
-                    user.isYou && "bg-primary/5 hover:bg-primary/10",
+                    "grid grid-cols-12 gap-4 px-6 py-4 items-center transition-all duration-300 cursor-pointer group hover:bg-muted/50 relative border-l-2 border-transparent",
+                    user.isYou && !rankStyles[user.rank] && "bg-primary/5 hover:bg-primary/10 border-l-primary",
+                    rankStyles[user.rank],
                     "animate-fade-in"
                   )}
-                  style={{ animationDelay: `${index * 50}ms` }}
+                  style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
                 >
                   {/* Rank */}
                   <div className="col-span-1 flex items-center justify-center">
@@ -190,7 +195,7 @@ export default function LeaderboardPage() {
                   {/* Address & Tier */}
                   <div className="col-span-4 md:col-span-3 flex items-center gap-3">
                     <div className={cn(
-                      "w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium",
+                      "w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-transform group-hover:scale-105",
                       user.rank <= 3
                         ? "bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30"
                         : "bg-muted"
@@ -199,7 +204,7 @@ export default function LeaderboardPage() {
                     </div>
                     <div className="flex flex-col">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-sm font-medium">
+                        <span className="font-mono text-sm font-medium group-hover:text-primary transition-colors">
                           {user.address.slice(0, 6)}...
                         </span>
                         {user.isYou && (
@@ -208,7 +213,6 @@ export default function LeaderboardPage() {
                           </span>
                         )}
                       </div>
-                      {/* Tiny tier badge below name */}
                       <span className={cn("text-[10px]", tierInfo.color)}>
                         {tierInfo.label}
                       </span>
@@ -241,13 +245,19 @@ export default function LeaderboardPage() {
                   </div>
 
                   {/* Streak */}
-                  <div className="col-span-1 text-right hidden md:block">
+                  <div className="col-span-1 text-right hidden md:block relative">
+                    {/* Move streak content out of the way of the chevron slightly? No, chevron is absolute right-4 */}
                     {user.streak > 1 ? (
                       <div className="flex items-center justify-end gap-1 text-orange-500 font-bold text-sm">
                         <Flame className="w-3 h-3 fill-orange-500" />
                         {user.streak}
                       </div>
                     ) : <span className="text-muted-foreground text-xs">-</span>}
+                  </div>
+
+                  {/* Hover Action Chevron */}
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
+                    <ChevronRight className="w-5 h-5 text-muted-foreground/50 group-hover:text-primary" />
                   </div>
                 </div>
               );

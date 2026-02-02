@@ -78,10 +78,19 @@ export function ReputationDisplay({ score, maxConfidence, tier }: ReputationDisp
     : 100;
 
   return (
-    <div className="space-y-8">
-      {/* Main Score Display */}
-      <div className="flex flex-col items-center">
-        <div className="relative">
+    <div className="grid md:grid-cols-2 gap-6 items-stretch">
+      {/* Left Column: Score & Badge */}
+      <div className="flex flex-col items-center justify-center space-y-8 p-6 bg-card border border-border rounded-xl relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-radial opacity-30 pointer-events-none" />
+
+        {/* Header (Optional, but nice to have Context) */}
+        <div className="absolute top-4 left-4 flex items-center gap-2 text-muted-foreground">
+          <Award className="h-4 w-4 text-primary" />
+          <span className="text-sm font-medium">Reputation Status</span>
+        </div>
+
+        {/* Main Score Display */}
+        <div className="relative mt-4">
           {/* Glow effect */}
           <div className={cn(
             "absolute inset-0 rounded-full blur-xl opacity-30",
@@ -98,71 +107,83 @@ export function ReputationDisplay({ score, maxConfidence, tier }: ReputationDisp
         </div>
 
         <p className="text-sm text-muted-foreground mt-4">Reputation Score</p>
-      </div>
 
-      {/* Tier Badge */}
-      <div className="flex justify-center">
+        {/* Tier Badge */}
         <div className={cn(
-          "inline-flex items-center gap-3 px-5 py-3 rounded-xl border",
+          "inline-flex items-center gap-3 px-5 py-3 rounded-xl border max-w-xs w-full justify-center transition-colors",
           info.bgColor,
           info.borderColor
         )}>
           <TierIcon className={cn("h-5 w-5", info.textColor)} />
-          <div>
-            <span className={cn("font-semibold", info.textColor)}>{info.label}</span>
-            <p className="text-xs text-muted-foreground">{info.description}</p>
+          <div className="text-left">
+            <span className={cn("font-semibold block leading-none mb-1", info.textColor)}>{info.label}</span>
+            <p className="text-xs text-muted-foreground leading-none">{info.description}</p>
           </div>
         </div>
       </div>
 
-      {/* Confidence Cap Card */}
-      <div className="max-w-md mx-auto bg-card border border-border rounded-xl overflow-hidden">
-        <div className="px-5 py-4 bg-muted/30 border-b border-border">
+      {/* Right Column: Confidence Cap Card (Self Contained) */}
+      <div className="w-full bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col">
+        <div className="px-5 py-4 bg-gradient-to-r from-muted/50 to-transparent border-b border-border">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-primary" />
-              <span className="font-medium">Confidence Cap</span>
+              <div className="p-1.5 bg-primary/10 rounded-lg">
+                <Shield className="h-4 w-4 text-primary" />
+              </div>
+              <span className="font-semibold">Confidence Cap</span>
             </div>
-            <span className="text-2xl font-bold font-mono-numbers text-primary">
-              {maxConfidence}%
-            </span>
+            <div className="text-right">
+              <span className="text-2xl font-bold font-mono-numbers text-primary block leading-none">
+                {maxConfidence}%
+              </span>
+              <span className="text-[10px] text-muted-foreground uppercase font-medium tracking-wider">Current Limit</span>
+            </div>
           </div>
         </div>
 
-        <div className="p-5 space-y-4">
-          {/* Tier Progress */}
-          <div className="space-y-3">
+        <div className="p-5 space-y-6 flex-1 flex flex-col justify-center">
+          {/* Visual Tier Timeline */}
+          <div className="relative space-y-0 pl-2">
+            {/* Vertical Line */}
+            <div className="absolute left-[15px] top-4 bottom-8 w-0.5 bg-border pointer-events-none" />
+
             {confidenceTiers.map((t, i) => {
               const isUnlocked = score >= t.rep;
               const isCurrent = t.cap === maxConfidence;
 
               return (
-                <div key={t.cap} className="flex items-center gap-3">
+                <div key={t.cap} className="relative flex items-center gap-4 py-2">
+                  {/* Node */}
                   <div className={cn(
-                    "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
-                    isUnlocked ? "bg-primary/10" : "bg-muted"
+                    "relative z-10 w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300",
+                    isCurrent ? "bg-primary border-primary shadow-[0_0_0_4px_rgba(var(--primary),0.1)]" :
+                      isUnlocked ? "bg-card border-primary text-primary" :
+                        "bg-muted border-border text-muted-foreground"
                   )}>
                     {isUnlocked ? (
-                      <Unlock className={cn("h-4 w-4", isCurrent ? "text-primary" : "text-green-500")} />
+                      <Unlock className={cn("h-3.5 w-3.5", isCurrent ? "text-primary-foreground" : "")} />
                     ) : (
-                      <Lock className="h-4 w-4 text-muted-foreground" />
+                      <Lock className="h-3.5 w-3.5" />
                     )}
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
+
+                  {/* Content */}
+                  <div className={cn(
+                    "flex-1 p-3 rounded-lg border transition-all",
+                    isCurrent ? "bg-primary/5 border-primary/20" : "border-transparent opacity-80"
+                  )}>
+                    <div className="flex items-center justify-between mb-1">
                       <span className={cn(
                         "text-sm font-medium",
                         isCurrent ? "text-primary" : isUnlocked ? "text-foreground" : "text-muted-foreground"
                       )}>
-                        {t.cap}% Max
+                        {t.cap}% Max Prediction
                       </span>
-                      <span className="text-xs text-muted-foreground font-mono-numbers">
-                        {t.rep}+ rep
-                      </span>
+                      {isCurrent && <span className="text-[10px] font-bold bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">ACTIVE</span>}
                     </div>
-                    {isCurrent && (
-                      <div className="text-xs text-muted-foreground">Current tier</div>
-                    )}
+                    <div className="text-xs text-muted-foreground font-mono flex items-center gap-1">
+                      {t.rep > 0 ? `${t.rep}+ Reputation` : "No Requirement"}
+                    </div>
                   </div>
                 </div>
               );
@@ -171,19 +192,19 @@ export function ReputationDisplay({ score, maxConfidence, tier }: ReputationDisp
 
           {/* Progress to next tier */}
           {nextTier && (
-            <div className="pt-4 border-t border-border space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground flex items-center gap-1">
-                  <TrendingUp className="h-3.5 w-3.5" />
-                  Progress to {nextTier.cap}%
+            <div className="bg-muted/30 rounded-lg p-3 border border-border/50">
+              <div className="flex items-center justify-between text-xs mb-2">
+                <span className="text-muted-foreground font-medium flex items-center gap-1">
+                  <TrendingUp className="h-3 w-3" />
+                  Next Unlock: <span className="text-foreground">{nextTier.cap}% Cap</span>
                 </span>
-                <span className="font-mono-numbers font-medium">
-                  {nextTier.rep - score} to go
+                <span className="font-mono font-medium text-primary">
+                  {Math.max(0, nextTier.rep - score)} rep needed
                 </span>
               </div>
-              <div className="h-2 rounded-full bg-muted overflow-hidden">
+              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                 <div
-                  className="h-full bg-primary rounded-full transition-all duration-500"
+                  className="h-full bg-gradient-to-r from-primary to-purple-500 rounded-full transition-all duration-1000 ease-out"
                   style={{ width: `${Math.min(100, Math.max(0, progressToNext))}%` }}
                 />
               </div>

@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ArrowRight, Target, Sliders, Shield, TrendingUp, AlertTriangle, Brain, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PredictionSimulator } from "@/components/ui/PredictionSimulator";
+import { SpotlightCard } from "@/components/ui/SpotlightCard";
+import { AnimatedCounter } from "@/components/ui/animated-counter";
 
 const principles = [
   {
@@ -21,191 +23,153 @@ const principles = [
   },
 ];
 
-const examples = [
-  {
-    scenario: "You predict YES at 70% confidence",
-    outcome: "If correct: Moderate reward, reputation boost",
-    detail: "If wrong: Moderate penalty, small reputation hit",
-  },
-  {
-    scenario: "You predict YES at 90% confidence",
-    outcome: "If correct: Large reward, significant reputation boost",
-    detail: "If wrong: Large penalty, major reputation hit",
-  },
-];
-
 export default function HowItWorksPage() {
   return (
-    <div className="container py-8 md:py-12">
-      <div className="max-w-2xl mx-auto">
+    <div className="container py-12 md:py-20">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-16">
-          <h1 className="mb-4">How It Works</h1>
-          <p className="text-lg text-muted-foreground">
+        <div className="text-center mb-20 animate-fade-in-up">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">
+            How It Works
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Calibr isn&apos;t about gambling on outcomes. It&apos;s about testing—and
             improving—your judgment.
           </p>
         </div>
 
         {/* Quick Steps */}
-        <div className="grid gap-4 sm:grid-cols-2 mb-16">
-          <div className="bg-card border border-border rounded-xl p-5">
-            <div className="step-number mb-3">01</div>
-            <h3 className="font-medium mb-2">Predict YES or NO</h3>
-            <p className="text-sm text-muted-foreground">
-              Pick a side on real-world events.
-            </p>
-          </div>
-          <div className="bg-card border border-border rounded-xl p-5">
-            <div className="step-number mb-3">02</div>
-            <h3 className="font-medium mb-2">Choose Confidence</h3>
-            <p className="text-sm text-muted-foreground">
-              50% to your max unlocked level.
-            </p>
-          </div>
-          <div className="bg-card border border-border rounded-xl p-5">
-            <div className="step-number mb-3">03</div>
-            <h3 className="font-medium mb-2">Risk Matches Confidence</h3>
-            <p className="text-sm text-muted-foreground">
-              Higher confidence = more at stake.
-            </p>
-          </div>
-          <div className="bg-card border border-border rounded-xl p-5">
-            <div className="step-number mb-3">04</div>
-            <h3 className="font-medium mb-2">Reputation Updates</h3>
-            <p className="text-sm text-muted-foreground">
-              Results shape your long-term score.
-            </p>
-          </div>
-        </div>
-
-        {/* Core Principles */}
-        <div className="space-y-6 mb-16">
-          <h2 className="text-xl font-medium text-center mb-8">The Core Principles</h2>
-          {principles.map((principle, index) => (
-            <div
-              key={principle.title}
-              className="flex gap-4 p-5 bg-card border border-border rounded-xl"
-            >
-              <div className="flex-shrink-0">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <principle.icon className="h-5 w-5 text-primary" />
-                </div>
-              </div>
-              <div>
-                <h3 className="font-medium mb-1">{principle.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {principle.description}
+        <div className="grid gap-6 sm:grid-cols-2 mb-24">
+          {[
+            { step: "01", title: "Predict YES or NO", desc: "Pick a side on real-world events.", delay: "0.1s" },
+            { step: "02", title: "Choose Confidence", desc: "50% to your max unlocked level.", delay: "0.2s" },
+            { step: "03", title: "Risk Matches Confidence", desc: "Higher confidence = more at stake.", delay: "0.3s" },
+            { step: "04", title: "Reputation Updates", desc: "Results shape your long-term score.", delay: "0.4s" }
+          ].map((item, i) => (
+            <div key={i} className="animate-fade-in-up" style={{ animationDelay: item.delay }}>
+              <SpotlightCard className="p-6 h-full hover:-translate-y-1 transition-transform duration-300">
+                <div className="text-4xl font-bold text-primary/10 mb-4 font-mono-numbers">{item.step}</div>
+                <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  {item.desc}
                 </p>
-              </div>
+              </SpotlightCard>
             </div>
           ))}
         </div>
 
+        {/* Core Principles */}
+        <div className="space-y-8 mb-24 animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
+          <h2 className="text-2xl font-semibold text-center mb-12">The Core Principles</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {principles.map((principle, index) => (
+              <SpotlightCard
+                key={principle.title}
+                className="p-6 h-full hover:-translate-y-1 transition-transform duration-300 group"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <principle.icon className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="font-semibold mb-3">{principle.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {principle.description}
+                </p>
+              </SpotlightCard>
+            ))}
+          </div>
+        </div>
+
         {/* Interactive Simulator */}
-        <div className="mb-16">
-          <div className="text-center mb-8">
-            <h2 className="text-xl font-medium mb-2">Simulate Your Risk</h2>
+        <div className="mb-24 animate-fade-in-up" style={{ animationDelay: "0.6s" }}>
+          <div className="text-center mb-10">
+            <h2 className="text-2xl font-semibold mb-3">Simulate Your Risk</h2>
             <p className="text-muted-foreground">
               See how confidence affects your potential returns and penalties.
             </p>
           </div>
-          <PredictionSimulator />
-        </div>
-
-        {/* How Reputation Works (moved from Profile) */}
-        <div className="space-y-6 mb-16">
-          <h2 className="text-xl font-medium text-center mb-8">How Reputation Works</h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="bg-card border border-border rounded-xl p-5">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <span className="text-primary font-medium text-sm">1</span>
-                </div>
-                <div>
-                  <h3 className="font-medium mb-1">Calibrated Wins</h3>
-                  <p className="text-sm text-muted-foreground">
-                    When you&apos;re right at 70% confidence, you gain reputation.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-card border border-border rounded-xl p-5">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <span className="text-primary font-medium text-sm">2</span>
-                </div>
-                <div>
-                  <h3 className="font-medium mb-1">Overconfidence Penalty</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Being wrong at 90% confidence costs more than being wrong at 60%.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-card border border-border rounded-xl p-5">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <span className="text-primary font-medium text-sm">3</span>
-                </div>
-                <div>
-                  <h3 className="font-medium mb-1">Confidence Unlocks</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Higher reputation unlocks higher max confidence levels.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-card border border-border rounded-xl p-5">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <span className="text-primary font-medium text-sm">4</span>
-                </div>
-                <div>
-                  <h3 className="font-medium mb-1">Long-term Focus</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Reputation rewards consistent calibration over time.
-                  </p>
-                </div>
-              </div>
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 blur-3xl opacity-50" />
+            <div className="relative">
+              <PredictionSimulator />
             </div>
           </div>
         </div>
 
+        {/* How Reputation Works */}
+        <div className="mb-24 animate-fade-in-up" style={{ animationDelay: "0.7s" }}>
+          <h2 className="text-2xl font-semibold text-center mb-12">How Reputation Works</h2>
+          <div className="grid gap-6 sm:grid-cols-2">
+            {[
+              { id: 1, title: "Calibrated Wins", desc: "When you're right at 70% confidence, you gain reputation." },
+              { id: 2, title: "Overconfidence Penalty", desc: "Being wrong at 90% confidence costs more than being wrong at 60%." },
+              { id: 3, title: "Confidence Unlocks", desc: "Higher reputation unlocks higher max confidence levels." },
+              { id: 4, title: "Long-term Focus", desc: "Reputation rewards consistent calibration over time." }
+            ].map((item) => (
+              <SpotlightCard key={item.id} className="p-6 flex items-start gap-4 hover:-translate-y-1 transition-transform duration-300 group">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                  <span className="text-primary font-bold">{item.id}</span>
+                </div>
+                <div>
+                  <h3 className="font-medium mb-2">{item.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {item.desc}
+                  </p>
+                </div>
+              </SpotlightCard>
+            ))}
+          </div>
+        </div>
+
         {/* Key Insight */}
-        <div className="bg-primary/5 border border-primary/20 rounded-xl p-8 mb-16">
-          <h2 className="text-xl font-medium mb-4 text-center">The Key Insight</h2>
-          <p className="text-muted-foreground leading-relaxed text-center mb-6">
-            Most people are overconfident. When they say they&apos;re 90% sure, they&apos;re right
-            maybe 70% of the time. Calibr helps you discover—and correct—your own
-            confidence blindspots.
-          </p>
-          <div className="grid gap-4 sm:grid-cols-3 text-center">
-            <div className="p-4 rounded-lg bg-card border border-border">
-              <span className="text-2xl font-bold font-mono-numbers text-primary block">70%</span>
-              <span className="text-sm text-muted-foreground">confident = right</span>
-              <span className="text-sm text-muted-foreground block">70% of the time</span>
-            </div>
-            <div className="flex items-center justify-center">
-              <ArrowRight className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <div className="p-4 rounded-lg bg-card border border-border">
-              <span className="text-2xl font-bold font-mono-numbers text-success block">↑</span>
-              <span className="text-sm text-muted-foreground">Reputation</span>
-              <span className="text-sm text-muted-foreground block">grows</span>
+        <div className="relative overflow-hidden rounded-2xl p-8 md:p-12 mb-20 animate-fade-in-up border border-primary/20 bg-card" style={{ animationDelay: "0.8s" }}>
+          <div className="absolute inset-0 bg-primary/5" />
+          <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/10 blur-3xl rounded-full" />
+          <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-primary/10 blur-3xl rounded-full" />
+
+          <div className="relative z-10">
+            <h2 className="text-2xl font-semibold mb-6 text-center">The Key Insight</h2>
+            <p className="text-muted-foreground leading-relaxed text-center mb-10 max-w-2xl mx-auto text-lg">
+              Most people are overconfident. When they say they&apos;re 90% sure, they&apos;re right
+              maybe 70% of the time. Calibr helps you discover—and correct—your own
+              confidence blindspots.
+            </p>
+
+            <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12">
+              <div className="p-6 rounded-xl bg-background/50 backdrop-blur border border-border text-center w-full md:w-48 shadow-sm">
+                <div className="text-3xl font-bold font-mono-numbers text-primary mb-1 flex justify-center">
+                  <AnimatedCounter value={70} />%
+                </div>
+                <div className="text-sm font-medium">confident = right</div>
+                <div className="text-xs text-muted-foreground">70% of the time</div>
+              </div>
+
+              <div className="hidden md:flex items-center justify-center text-primary/50">
+                <ArrowRight className="h-8 w-8 animate-pulse" />
+              </div>
+              <div className="md:hidden">
+                <ArrowRight className="h-6 w-6 text-primary/50 rotate-90" />
+              </div>
+
+              <div className="p-6 rounded-xl bg-background/50 backdrop-blur border border-border text-center w-full md:w-48 shadow-sm">
+                <div className="text-3xl font-bold text-green-500 mb-1 flex justify-center">
+                  <TrendingUp className="h-8 w-8" />
+                </div>
+                <div className="text-sm font-medium">Reputation</div>
+                <div className="text-xs text-muted-foreground">grows</div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* CTA */}
-        <div className="text-center">
-          <p className="text-muted-foreground mb-6">
+        <div className="text-center animate-fade-in-up" style={{ animationDelay: "0.9s" }}>
+          <p className="text-lg text-muted-foreground mb-8">
             Ready to test your calibration?
           </p>
           <Link href="/explore">
-            <Button size="lg" className="gap-2">
+            <Button size="lg" className="h-12 px-8 text-lg gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-shadow">
               Explore Markets
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-5 w-5" />
             </Button>
           </Link>
         </div>

@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
+import { cn } from "@/lib/utils";
+import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { ReputationDisplay } from "@/components/profile/ReputationDisplay";
 import { ReputationChart } from "@/components/profile/ReputationChart";
 import { ConfidenceAccuracyChart } from "@/components/profile/ConfidenceAccuracyChart";
-import { TrendingUp, TrendingDown, Award, AlertTriangle, Loader2 } from "lucide-react";
+import { TrendingUp, TrendingDown, Award, AlertTriangle, Loader2, Copy, Check } from "lucide-react";
 import Link from "next/link";
 import { useWallet } from "@/hooks/useWallet";
 import { useUserPredictions } from "@/hooks/useUserPredictions";
@@ -15,6 +17,13 @@ export default function PublicProfilePage({ params }: { params: { address: strin
     // Decode address in case of URL encoding
     const address = decodeURIComponent(params.address);
     const isMe = myAddress === address;
+    const [copied, setCopied] = useState(false);
+
+    const copyToClipboard = () => {
+        navigator.clipboard.writeText(address);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
 
     const { data: predictions, isLoading: isLoadingPredictions } = useUserPredictions(address);
     const { data: leaderboardData, isLoading: isLoadingLeaderboard } = useLeaderboard(null);
@@ -158,128 +167,196 @@ export default function PublicProfilePage({ params }: { params: { address: strin
     else if (userStats?.tier === "proven") inferredMaxConf = 80;
 
     return (
-        <div className="container py-8 md:py-12">
-            <div className="max-w-4xl mx-auto">
-                {/* Header */}
-                <div className="text-center mb-12">
-                    {isMe && (
-                        <div className="mb-4">
-                            <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold">
-                                This is you
+        <div className="container py-8 md:py-12 animate-fade-in text-left">
+            <div className="max-w-6xl mx-auto">
+                {/* Header & Identity */}
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-10">
+                    <div>
+                        <div className="flex items-center gap-3 mb-2">
+                            <h1 className="text-3xl font-bold tracking-tight">Forecaster Profile</h1>
+                            {isMe && (
+                                <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold">
+                                    You
+                                </span>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div
+                                onClick={copyToClipboard}
+                                className="bg-muted hover:bg-muted/80 active:scale-95 transition-all px-3 py-1.5 rounded-lg text-sm font-mono cursor-pointer flex items-center gap-2 group border border-transparent hover:border-primary/20"
+                                role="button"
+                                title="Copy address"
+                            >
+                                <span className="text-foreground/80">{address.slice(0, 6)}...{address.slice(-4)}</span>
+                                {copied ? (
+                                    <Check className="w-3.5 h-3.5 text-green-500 animate-in zoom-in" />
+                                ) : (
+                                    <Copy className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Hero Stats Row - The "Wow" Factor */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+                    {/* Net PnL Card */}
+                    <div className="relative overflow-hidden bg-card border border-border rounded-xl p-5 group hover:border-primary/20 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
+                        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="relative z-10">
+                            <div className="text-sm text-muted-foreground font-medium mb-1">Net PnL</div>
+                            <div className="flex items-baseline gap-1">
+                                <span className={cn(
+                                    "text-3xl font-bold font-mono-numbers",
+                                    netProfit > 0 ? "text-green-500" : netProfit < 0 ? "text-red-500" : "text-foreground"
+                                )}>
+                                    {netProfit > 0 ? "+" : ""}{netProfit}
+                                </span>
+                                <span className="text-xs text-muted-foreground font-medium uppercase">pts</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Rank Card */}
+                    <div className="relative overflow-hidden bg-card border border-border rounded-xl p-5 group hover:border-primary/20 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
+                        <div className="text-sm text-muted-foreground font-medium mb-1">Global Rank</div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-3xl font-bold font-mono-numbers">
+                                #{userStats?.rank || "-"}
+                            </span>
+                            {userStats?.rank && userStats.rank <= 3 && (
+                                <Award className="h-5 w-5 text-yellow-500 fill-yellow-500/20" />
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Win Rate Card */}
+                    <div className="relative overflow-hidden bg-card border border-border rounded-xl p-5 group hover:border-primary/20 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
+                        <div className="text-sm text-muted-foreground font-medium mb-1">Win Rate</div>
+                        <div className="text-3xl font-bold font-mono-numbers">
+                            {userStats?.winRate || 0}%
+                        </div>
+                    </div>
+
+                    {/* Streak Card */}
+                    <div className="relative overflow-hidden bg-card border border-border rounded-xl p-5 group hover:border-primary/20 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
+                        <div className="text-sm text-muted-foreground font-medium mb-1">Current Streak</div>
+                        <div className="flex items-center gap-2">
+                            <TrendingUp className="h-6 w-6 text-orange-500" />
+                            <span className="text-3xl font-bold font-mono-numbers text-orange-500">
+                                {userStats?.streak || 0}
                             </span>
                         </div>
-                    )}
-                    <h1 className="mb-3">Forecaster Profile</h1>
-                    <p className="text-muted-foreground break-all">
-                        <code className="bg-muted px-2 py-1 rounded text-sm">{address}</code>
-                    </p>
-                </div>
-
-                {/* Main Reputation Display */}
-                <ReputationDisplay
-                    score={userStats?.reputation || 0}
-                    maxConfidence={inferredMaxConf}
-                    tier={userStats?.tier || "new"}
-                />
-
-                {/* Charts Section */}
-                <div className="grid gap-6 md:grid-cols-2 mt-8">
-                    <ReputationChart data={reputationHistory} />
-                    {confidenceAccuracy.length > 0 ? (
-                        <ConfidenceAccuracyChart data={confidenceAccuracy} />
-                    ) : (
-                        <div className="bg-card border border-border rounded-xl p-6 flex items-center justify-center">
-                            <p className="text-muted-foreground text-sm text-center">
-                                No predictions made yet
-                            </p>
-                        </div>
-                    )}
-                </div>
-
-                {/* Best and Worst Predictions */}
-                <div className="grid gap-6 md:grid-cols-2 mt-8">
-                    {/* Best Predictions */}
-                    <div className="bg-card border border-border rounded-xl p-6">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Award className="h-5 w-5 text-green-500" />
-                            <h3 className="font-medium">Best Wins</h3>
-                        </div>
-                        {bestPredictions.length > 0 ? (
-                            <div className="space-y-3">
-                                {bestPredictions.map((pred, i) => (
-                                    <Link
-                                        key={i}
-                                        href={`/market/${pred.marketId}`}
-                                        className="flex items-center justify-between py-2 border-b border-border last:border-0 hover:bg-muted/50 -mx-2 px-2 rounded transition-colors"
-                                    >
-                                        <div className="min-w-0 flex-1">
-                                            <p className="text-sm truncate">{pred.question}</p>
-                                            <span className="text-xs text-muted-foreground">{pred.confidence}% confidence</span>
-                                        </div>
-                                        <div className="flex items-center gap-1 ml-3">
-                                            <TrendingUp className="h-3 w-3 text-green-500" />
-                                            <span className="text-sm font-medium text-green-500 font-mono-numbers">+{pred.profit}</span>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-muted-foreground text-sm">No wins recorded</p>
-                        )}
-                    </div>
-
-                    {/* Worst Overconfidence */}
-                    <div className="bg-card border border-border rounded-xl p-6">
-                        <div className="flex items-center gap-2 mb-4">
-                            <AlertTriangle className="h-5 w-5 text-red-500" />
-                            <h3 className="font-medium">Biggest Losses</h3>
-                        </div>
-                        {worstPredictions.length > 0 ? (
-                            <div className="space-y-3">
-                                {worstPredictions.map((pred, i) => (
-                                    <Link
-                                        key={i}
-                                        href={`/market/${pred.marketId}`}
-                                        className="flex items-center justify-between py-2 border-b border-border last:border-0 hover:bg-muted/50 -mx-2 px-2 rounded transition-colors"
-                                    >
-                                        <div className="min-w-0 flex-1">
-                                            <p className="text-sm truncate">{pred.question}</p>
-                                            <span className="text-xs text-muted-foreground">{pred.confidence}% confidence</span>
-                                        </div>
-                                        <div className="flex items-center gap-1 ml-3">
-                                            <TrendingDown className="h-3 w-3 text-red-500" />
-                                            <span className="text-sm font-medium text-red-500 font-mono-numbers">-{pred.loss}</span>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-muted-foreground text-sm">No losses recorded</p>
-                        )}
                     </div>
                 </div>
 
-                {/* Total Profit/Loss */}
-                <div className="mt-8 bg-card border border-border rounded-xl p-6 text-center">
-                    <span className="text-sm text-muted-foreground block mb-2">Total Profit / Loss</span>
-                    {/* Convert points (MIST/integer) to SUI if needed, but points are just points here? 
-                Actually 'netProfit' here is aggregated from 'profit/loss' fields in predictions.
-                In contracts, profit/loss are u64 integers (MIST). 
-                If we want to show SUI, we assume / 1e9. 
-                But previous profile displayed them as 'pts' (points). 
-                Let's stick to points/raw integer to match existing profile.
-            */}
-                    <span className={`text-3xl font-bold font-mono-numbers ${netProfit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                        {netProfit > 0 ? '+' : ''}{(netProfit / 100).toFixed(0)} {/* Showing as raw points or scaled? 
-               Wait, existing profile used pure `netProfit`. 
-               Prediction profit/loss in MIST? 
-               Points token has decimals? No, integer.
-               Let's assume points are 1:1 integers. 
-            */}
-                        {netProfit} pts
-                    </span>
+                {/* Main Content Layout - Stacked */}
+                <div className="space-y-10">
+
+                    {/* 1. Reputation Overview (Full Width) */}
+                    <div className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                        <ReputationDisplay
+                            score={userStats?.reputation || 700}
+                            maxConfidence={inferredMaxConf}
+                            tier={userStats?.tier || "new"}
+                        />
+                    </div>
+
+                    {/* 2. Charts Area */}
+                    <div className="grid md:grid-cols-2 gap-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-1 shadow-sm h-[350px]">
+                            <ReputationChart data={reputationHistory} />
+                        </div>
+                        <div className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-1 shadow-sm h-[350px]">
+                            {confidenceAccuracy.length > 0 ? (
+                                <ConfidenceAccuracyChart data={confidenceAccuracy} />
+                            ) : (
+                                <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
+                                    Not enough data for calibration chart
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* 3. Lists Area (Wins/Misses) */}
+                    <div className="grid md:grid-cols-2 gap-6 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                        {/* Best Predictions */}
+                        <div className="bg-card border border-border rounded-xl p-6 h-full shadow-sm hover:border-primary/20 transition-colors">
+                            <div className="flex items-center gap-2 mb-4">
+                                <div className="p-1.5 rounded-lg bg-green-500/10">
+                                    <TrendingUp className="h-4 w-4 text-green-500" />
+                                </div>
+                                <h3 className="font-medium">Top Wins</h3>
+                            </div>
+                            {bestPredictions.length > 0 ? (
+                                <div className="space-y-3">
+                                    {bestPredictions.map((pred, i) => (
+                                        <Link
+                                            key={i}
+                                            href={`/market/${pred.marketId}`}
+                                            className="group flex items-center justify-between py-3 border-b border-border/50 last:border-0 hover:bg-muted/50 -mx-2 px-3 rounded-lg transition-all hover:scale-[1.01] hover:shadow-sm"
+                                        >
+                                            <div className="min-w-0 flex-1 mr-4">
+                                                <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">{pred.question}</p>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className="text-[10px] bg-green-500/10 text-green-500 px-1.5 py-0.5 rounded font-mono font-medium">WON</span>
+                                                    <span className="text-xs text-muted-foreground">{pred.confidence}% conf</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="text-sm font-bold text-green-500 font-mono-numbers">+{pred.profit}</span>
+                                                <div className="text-[10px] text-muted-foreground">pts</div>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="h-32 flex items-center justify-center text-muted-foreground text-sm italic">
+                                    No wins recorded yet
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Worst Predictions */}
+                        <div className="bg-card border border-border rounded-xl p-6 h-full shadow-sm hover:border-primary/20 transition-colors">
+                            <div className="flex items-center gap-2 mb-4">
+                                <div className="p-1.5 rounded-lg bg-red-500/10">
+                                    <AlertTriangle className="h-4 w-4 text-red-500" />
+                                </div>
+                                <h3 className="font-medium">Misses</h3>
+                            </div>
+                            {worstPredictions.length > 0 ? (
+                                <div className="space-y-3">
+                                    {worstPredictions.map((pred, i) => (
+                                        <Link
+                                            key={i}
+                                            href={`/market/${pred.marketId}`}
+                                            className="group flex items-center justify-between py-3 border-b border-border/50 last:border-0 hover:bg-muted/50 -mx-2 px-3 rounded-lg transition-all hover:scale-[1.01] hover:shadow-sm"
+                                        >
+                                            <div className="min-w-0 flex-1 mr-4">
+                                                <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">{pred.question}</p>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className="text-[10px] bg-red-500/10 text-red-500 px-1.5 py-0.5 rounded font-mono font-medium">LOST</span>
+                                                    <span className="text-xs text-muted-foreground">{pred.confidence}% conf</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="text-sm font-bold text-red-500 font-mono-numbers">-{pred.loss}</span>
+                                                <div className="text-[10px] text-muted-foreground">pts</div>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="h-32 flex items-center justify-center text-muted-foreground text-sm italic">
+                                    Clean record so far
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     );
+
 }

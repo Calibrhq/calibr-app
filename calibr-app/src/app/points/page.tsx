@@ -308,14 +308,15 @@ export default function PointsPage() {
                         /* BUY TAB */
                         <div className="grid md:grid-cols-5 gap-8">
                             <div className="md:col-span-3 space-y-6">
-                                {/* Amount Selection */}
-                                <div className="bg-card border border-border rounded-2xl p-6">
+                                {/* Combined Buy Card */}
+                                <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
                                     <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
                                         <Coins className="w-5 h-5 text-primary" />
                                         Select Amount
                                     </h2>
 
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+                                    {/* Compact Buttons */}
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                                         {BUY_PRESETS.map((preset) => (
                                             <button
                                                 key={preset.points}
@@ -323,92 +324,80 @@ export default function PointsPage() {
                                                     setSelectedPoints(preset.points);
                                                     setIsCustom(false);
                                                 }}
-                                                className={`p-3 rounded-lg border-2 transition-all ${!isCustom && selectedPoints === preset.points
-                                                    ? "border-primary bg-primary/10"
-                                                    : "border-border hover:border-primary/50"
+                                                className={`p-3 rounded-xl border transition-all relative overflow-hidden group ${!isCustom && selectedPoints === preset.points
+                                                    ? "border-primary bg-primary/5 shadow-[0_0_0_1px_hsl(var(--primary))]"
+                                                    : "border-border hover:border-primary/50 hover:bg-muted/50"
                                                     }`}
                                             >
-                                                <div className="font-bold text-lg text-foreground">
+                                                <div className={`font-bold text-lg ${!isCustom && selectedPoints === preset.points ? "text-primary" : "text-foreground"}`}>
                                                     {preset.points.toLocaleString()}
                                                 </div>
-                                                <div className="text-xs text-muted-foreground">
+                                                <div className="text-xs text-muted-foreground font-medium">
                                                     {preset.label}
                                                 </div>
                                             </button>
                                         ))}
                                     </div>
 
-                                    <div className="flex items-center gap-3">
-                                        <button
-                                            onClick={() => setIsCustom(true)}
-                                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${isCustom
-                                                ? "bg-primary text-primary-foreground"
-                                                : "bg-muted text-muted-foreground hover:bg-primary/10"
-                                                }`}
-                                        >
-                                            Custom
-                                        </button>
+                                    {/* Custom Input */}
+                                    <div className="mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <button
+                                                onClick={() => setIsCustom(!isCustom)}
+                                                className={`text-sm font-medium transition-colors hover:text-primary ${isCustom ? "text-primary" : "text-muted-foreground"}`}
+                                            >
+                                                {isCustom ? "Use Preset" : "Enter Custom Amount"}
+                                            </button>
+                                        </div>
                                         {isCustom && (
                                             <input
                                                 type="number"
+                                                autoFocus
                                                 min={POINTS_UNIT}
                                                 step={POINTS_UNIT}
                                                 value={customAmount}
                                                 onChange={(e) => setCustomAmount(e.target.value)}
                                                 placeholder={`Multiple of ${POINTS_UNIT}`}
-                                                className="flex-1 px-4 py-2 bg-input border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                                className="w-full mt-2 px-4 py-2 bg-input border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 animate-in fade-in slide-in-from-top-1"
                                             />
                                         )}
                                     </div>
-                                </div>
 
-                                {/* Cost Summary */}
-                                <div className="bg-card border border-border rounded-2xl p-6">
-                                    <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                                        <Wallet className="w-5 h-5 text-primary" />
-                                        Cost Summary
-                                    </h2>
+                                    {/* Divider */}
+                                    <div className="h-px bg-border/50 mb-6" />
 
-                                    <div className="space-y-3">
-                                        <div className="flex justify-between items-center py-2">
-                                            <span className="text-muted-foreground">Points to buy</span>
-                                            <span className="font-semibold text-foreground">{pointsToBuy.toLocaleString()}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center py-2">
-                                            <span className="text-muted-foreground">Price per point</span>
-                                            <span className="font-mono text-sm text-foreground">
-                                                ~{pricePerPoint.toFixed(6)} SUI
-                                            </span>
-                                        </div>
-                                        <div className="border-t border-border pt-3">
-                                            <div className="flex justify-between items-center">
-                                                <span className="font-semibold text-foreground">Total Cost</span>
-                                                <span className="font-bold text-2xl text-primary">
-                                                    ~{costInSui.toFixed(4)} SUI
-                                                </span>
+                                    {/* Compact Summary & Action */}
+                                    <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+                                        <div className="w-full sm:w-auto text-center sm:text-left">
+                                            <div className="text-sm text-muted-foreground mb-1">Total Cost</div>
+                                            <div className="text-3xl font-bold font-mono-numbers text-foreground flex items-baseline justify-center sm:justify-start gap-2">
+                                                ~{costInSui.toFixed(4)} <span className="text-base font-normal text-muted-foreground">SUI</span>
                                             </div>
-                                            <div className="text-sm text-muted-foreground text-right mt-1">
-                                                Enables {predictionsEnabled} predictions
+                                            <div className="text-xs text-green-500 font-medium mt-1 bg-green-500/10 px-2 py-0.5 rounded-full inline-block">
+                                                +{predictionsEnabled} predictions
                                             </div>
                                         </div>
+
+                                        <button
+                                            onClick={handleBuyPoints}
+                                            disabled={!isConnected || pointsToBuy < POINTS_UNIT || isBuying}
+                                            className="w-full sm:w-auto flex-1 min-w-[200px] py-4 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground text-primary-foreground font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-0.5"
+                                        >
+                                            {!isConnected ? (
+                                                "Connect Wallet"
+                                            ) : isBuying ? (
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                    Processing...
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    Buy Now
+                                                    <ArrowRight className="w-5 h-5" />
+                                                </>
+                                            )}
+                                        </button>
                                     </div>
-
-                                    <button
-                                        onClick={handleBuyPoints}
-                                        disabled={!isConnected || pointsToBuy < POINTS_UNIT || isBuying}
-                                        className="w-full mt-6 py-4 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground text-primary-foreground font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
-                                    >
-                                        {!isConnected ? (
-                                            "Connect Wallet to Buy"
-                                        ) : isBuying ? (
-                                            "Processing..."
-                                        ) : (
-                                            <>
-                                                Buy {pointsToBuy.toLocaleString()} Points
-                                                <ArrowRight className="w-5 h-5" />
-                                            </>
-                                        )}
-                                    </button>
                                 </div>
                             </div>
 
