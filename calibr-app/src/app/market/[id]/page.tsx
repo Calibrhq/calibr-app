@@ -357,6 +357,7 @@ export default function MarketDetailPage() {
               <PredictionPanel
                 marketId={market.id}
                 question={market.question}
+                onPredictionSuccess={loadMarket}
               />
             )}
           </div>

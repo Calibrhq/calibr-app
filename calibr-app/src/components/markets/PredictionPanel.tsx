@@ -19,6 +19,7 @@ import Link from "next/link";
 interface PredictionPanelProps {
   marketId: string;
   question: string;
+  onPredictionSuccess?: () => void;
 }
 
 // Calculate risk based on Calibr's formula
@@ -26,7 +27,7 @@ function calculateRisk(confidence: number): number {
   return Math.max(5, Math.round(100 * (confidence - 50) / 40));
 }
 
-export function PredictionPanel({ marketId, question }: PredictionPanelProps) {
+export function PredictionPanel({ marketId, question, onPredictionSuccess }: PredictionPanelProps) {
   const {
     isConnected,
     hasProfile,
@@ -41,7 +42,7 @@ export function PredictionPanel({ marketId, question }: PredictionPanelProps) {
   const { data: pointsBalance, refetch: refetchPoints } = usePointsBalance();
 
   // Get user's predictions to check for duplicates
-  const { data: userPredictions } = useUserPredictions();
+  const { data: userPredictions, refetch: refetchPredictions } = useUserPredictions();
 
   // Check if user already has a prediction on this market
   const existingPrediction = useMemo(() => {
@@ -144,9 +145,17 @@ export function PredictionPanel({ marketId, question }: PredictionPanelProps) {
           duration: 4000,
         });
 
-        // Refresh profile and points balance
-        await refreshProfile();
-        await refetchPoints();
+        // Refresh data
+        await Promise.all([
+          refreshProfile(),
+          refetchPoints(),
+          refetchPredictions(), // Also refresh predictions list
+        ]);
+
+        // Notify parent to refresh market data
+        if (onPredictionSuccess) {
+          onPredictionSuccess();
+        }
 
         // Reset form
         setShowConfirmation(false);
