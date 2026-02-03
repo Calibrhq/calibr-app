@@ -58,6 +58,7 @@ module calibr::events {
         /// Address authorized to resolve this market
         authority: address,
     }
+    
 
     /// Emitted when a market is locked (no more predictions allowed).
     /// 
