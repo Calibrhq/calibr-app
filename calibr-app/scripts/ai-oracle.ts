@@ -17,15 +17,30 @@ const MODULE_NAME = "market";
 const POLLING_INTERVAL_MS = 60 * 1000; // 1 minute
 
 // AI CONFIGURATION
-// "MOCK" = Free, deterministic (Great for Demos)
-// "OPENAI" = Needs API Key + Credits
-const AI_PROVIDER: "MOCK" | "OPENAI" = "MOCK";
-const MODEL = "gpt-3.5-turbo";
+// Providers:
+// "MOCK"   = Free, deterministic (Simulated)
+// "OPENAI" = Paid, high quality (GPT-4o, GPT-3.5)
+// "GROQ"   = Free (Beta), insanely fast (Llama 3, Mixtral)
+const AI_PROVIDER: "MOCK" | "OPENAI" | "GROQ" = "GROQ";
+
+// Models
+const MODEL_OPENAI = "gpt-3.5-turbo";
+const MODEL_GROQ = "llama-3.3-70b-versatile"; // Free & Fast
 
 const client = new SuiClient({ url: getJsonRpcFullnodeUrl(NETWORK), network: NETWORK });
 
+// OpenAI Client (Compatible with Groq)
+const apiKey = AI_PROVIDER === "GROQ"
+    ? process.env.GROQ_API_KEY
+    : process.env.OPENAI_API_KEY;
+
+const baseURL = AI_PROVIDER === "GROQ"
+    ? "https://api.groq.com/openai/v1"
+    : undefined; // Default OpenAI
+
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY || "sk-placeholder", // Safe for Mock mode
+    apiKey: apiKey || "sk-placeholder",
+    baseURL: baseURL,
 });
 
 // In-memory cache of known market IDs to avoid re-fetching events constantly
@@ -33,10 +48,15 @@ const knownMarkets = new Set<string>();
 
 async function main() {
     console.log(`🤖 Calibr AI Oracle Agent Starting...`);
-    console.log(`🔹 Mode: ${AI_PROVIDER} ${AI_PROVIDER === "OPENAI" ? `(${MODEL})` : "(Zero Cost)"}`);
+    console.log(`🔹 Provider: ${AI_PROVIDER} ${AI_PROVIDER === "GROQ" ? "(Fast & Free Llama 3)" : ""}`);
     console.log(`🔹 Network: ${NETWORK}`);
     console.log(`🔹 Package: ${PACKAGE_ID.slice(0, 10)}...`);
     console.log(`🔹 Polling Interval: ${POLLING_INTERVAL_MS / 1000}s`);
+
+    if (AI_PROVIDER !== "MOCK" && !apiKey) {
+        console.error(`❌ Missing API Key for ${AI_PROVIDER}. Check .env`);
+        process.exit(1);
+    }
 
     // 1. Setup Wallet
     const privateKey = process.env.ADMIN_PRIVATE_KEY;
@@ -133,7 +153,7 @@ async function processMarkets(keypair: Ed25519Keypair) {
             }
 
             // B. RESOLVE (If Locked)
-            console.log("   🧠 AI Agent analyzing truth...");
+            console.log(`   🧠 AI Agent analyzing truth (${AI_PROVIDER})...`);
             const outcome = await getOutcome(question);
 
             if (outcome === "UNKNOWN") {
@@ -199,13 +219,12 @@ async function getOutcome(question: string): Promise<"YES" | "NO" | "UNKNOWN"> {
     if (AI_PROVIDER === "MOCK") {
         return getMockOutcome(question);
     } else {
-        return getOpenAIOutcome(question);
+        return getLLMOutcome(question);
     }
 }
 
 // --- 5. MOCK AI (FREE) ---
 async function getMockOutcome(question: string): Promise<"YES" | "NO" | "UNKNOWN"> {
-    console.log("      (Running in MOCK mode - Deterministic simulation)");
     await new Promise(r => setTimeout(r, 1000)); // Simulate thinking
 
     // Deterministic logic based on question length for demo consistency
@@ -221,8 +240,8 @@ async function getMockOutcome(question: string): Promise<"YES" | "NO" | "UNKNOWN
     return sum % 2 === 0 ? "YES" : "NO";
 }
 
-// --- 6. OPENAI (REAL) ---
-async function getOpenAIOutcome(question: string): Promise<"YES" | "NO" | "UNKNOWN"> {
+// --- 6. REAL AI (OPENAI / GROQ) ---
+async function getLLMOutcome(question: string): Promise<"YES" | "NO" | "UNKNOWN"> {
     const prompt = `
     You are the impartial AI Referee for a prediction market.
     Question: "${question}"
@@ -233,7 +252,7 @@ async function getOpenAIOutcome(question: string): Promise<"YES" | "NO" | "UNKNO
     try {
         const completion = await openai.chat.completions.create({
             messages: [{ role: "user", content: prompt }],
-            model: MODEL,
+            model: AI_PROVIDER === "GROQ" ? MODEL_GROQ : MODEL_OPENAI,
             temperature: 0,
         });
 
@@ -242,7 +261,7 @@ async function getOpenAIOutcome(question: string): Promise<"YES" | "NO" | "UNKNO
         return "UNKNOWN";
 
     } catch (e) {
-        console.error("      ⚠️ OpenAI Error:", e);
+        console.error(`      ⚠️ ${AI_PROVIDER} Error:`, e);
         return "UNKNOWN";
     }
 }
