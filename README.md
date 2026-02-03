@@ -34,7 +34,10 @@ Each prediction uses a fixed stake $S$ (normalized point value) and a declared c
 
 ### Risk Sizing
 The capital explicitly at risk is a function of confidence:
-> $$ \text{Risk} = S \times (2c - 1) $$
+
+$$
+\text{Risk} = S \times (2c - 1)
+$$
 
 *   At 50% confidence (uncertain), Risk = 0.
 *   At 100% confidence (certain), Risk = S.
@@ -47,9 +50,14 @@ Let $R_L$ be the total risk pledged by the losing side.
 Let $r_i$ be the risk pledged by winning user $i$.
 
 The payout for user $i$ is:
-> $$ \text{Payout}_i = \frac{r_i}{\sum r_{\text{winners}}} \times R_L $$
->
-> $$ \text{Net}_i = \text{Payout}_i - r_i $$
+
+$$
+\text{Payout}_i = \frac{r_i}{\sum r_{\text{winners}}} \times R_L
+$$
+
+$$
+\text{Net}_i = \text{Payout}_i - r_i
+$$
 
 **Implication:** Being "right" is necessary but not sufficient for profit. A user must be "right" relative to the consensus. This structure ensures that payouts flow from the overconfident/wrong to the calibrated/correct.
 
@@ -62,14 +70,23 @@ After each resolved market, a user's on-chain reputation is updated using a **Pr
 
 Let outcome $o \in \{0,1\}$ and declared confidence $c$.
 
-> 1. **Calculate Loss:**
->    $$ \text{Loss} = (c - o)^2 $$
->
-> 2. **Calculate Delta:**
->    $$ \Delta\text{Skill} = 1 - \text{Loss} $$
->
-> 3. **Update Reputation (Exponential Moving Average):**
->    $$ \text{Skill}_t = \alpha \cdot \text{Skill}_{t-1} + (1 - \alpha) \cdot \Delta\text{Skill} $$
+**1. Calculate Loss:**
+
+$$
+\text{Loss} = (c - o)^2
+$$
+
+**2. Calculate Delta:**
+
+$$
+\Delta\text{Skill} = 1 - \text{Loss}
+$$
+
+**3. Update Reputation (Exponential Moving Average):**
+
+$$
+\text{Skill}_t = \alpha \cdot \text{Skill}_{t-1} + (1 - \alpha) \cdot \Delta\text{Skill}
+$$
 
 ### Properties
 *   **Overconfidence Penalty:** Claiming 90% confidence and being wrong results in a massive penalty $(0.9 - 0)^2 = 0.81$ loss.
