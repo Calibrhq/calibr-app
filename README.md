@@ -4,112 +4,126 @@
 
 ---
 
-## Project Overview
+## Overview
 
-Most on-chain systems only measure capital. A new wallet, a skilled decision-maker, and a malicious actor all look identical. This breaks governance, incentives, and any mechanism that depends on judgment rather than money.
+Calibr introduces a new DeFi primitive called **Proof of Calibration**—a rigorous method to measure and assetize long-term decision quality. By coupling economic risk with explicit confidence declarations, we create a system where reputation is not a vanity metric, but a mathematical function of historical accuracy.
 
-**Calibr fixes this by making accuracy and confidence measurable over time through prediction markets with objectively verifiable outcomes.**
+---
 
-It introduces **Proof of Calibration**—a system where confidence is no longer cheap talk. It directly affects both short-term outcomes and long-term reputation.
+## The Problem
+
+Current prediction markets suffer from incentive misalignment that degrades their utility as signal mechanisms:
+1.  **Gambling Drift:** Binary "all-or-nothing" payoffs reward variance, not precision. A degenerate gambler who bets 100% on a coin flip and wins is effectively indistinguishable from a calibrated expert.
+2.  **Short-Termism:** Incentives focus purely on the immediate settlement. There is no cumulative memory of "who was right/wrong and by how much."
+3.  **Signal Decay:** Without a persistent reputation layer, skill does not accrue value. A new wallet has the same standing as a proven forecaster, limiting the ability to meaningfully weight expert opinion.
+
+Calibr addresses this by differentiating between *luck* and *calibration*.
 
 ---
 
 ## Core Idea
 
-Users make binary predictions (YES / NO) and explicitly state how confident they are (50–90%).
-The system is built around two models:
-
-### Model 1: Confidence-Weighted Incentives (Immediate Feedback)
-Each prediction uses a fixed stake (e.g., 100 points). Users choose a confidence $c \in [0.5, 0.9]$.
-The risk function is:
-$$ \text{Risk} = \text{Stake} \times (2c - 1) $$
-
-*   **Higher confidence = More capital at risk.**
-*   **Settlement:** All losing risk forms a loser pool. Winners split this pool proportionally to their own risk.
-*   **Result:** A zero-sum system where higher confidence yields higher upside if correct, but overconfidence produces larger losses if wrong. Being correct guarantees *relative advantage*, not just profit.
-
-### Model 2: Proof of Calibration (Reputation)
-After every resolved market, Calibr updates a user’s reputation using a proper scoring rule (Brier-style).
-*   **Correct at High Confidence** → Strong positive update.
-*   **Correct at Low Confidence** → Small positive update.
-*   **Wrong at High Confidence** → Strong penalty.
-
-Reputation compounds slowly and path-dependently. It is impossible to buy instantly and resistant to Sybil resets. This reputation is not cosmetic—it directly gates system privileges like **confidence ceilings** and **access to advanced markets**.
+Users make binary predictions (YES / NO) and explicitly declare their **Confidence** ($c$).
+Confidence is no longer cheap talk; it has direct economic and reputational consequences.
 
 ---
 
-## Architecture (Sui-Native)
+## Model 1: Confidence-Weighted Incentives
 
-Calibr is designed around an object-centric execution model because reputation and long-lived identity cannot be safely represented as shared global state.
+Each prediction uses a fixed stake $S$ (normalized point value) and a declared confidence $c \in [0.5, 0.9]$.
 
-### 1. User Calibration Object (Owned)
-Each user has a non-transferable **Owned Object** that stores their calibration history and reputation score. Ownership is enforced at the protocol level, not via tokens or contract variables.
+### Risk Sizing
+The capital explicitly at risk is a function of confidence:
+> $$ \text{Risk} = S \times (2c - 1) $$
 
-### 2. Market Objects (Shared)
-Each prediction market is an independent **Shared Object**. Users interacting with different markets do not contend on global state, enabling parallel execution at scale.
+*   At 50% confidence (uncertain), Risk = 0.
+*   At 100% confidence (certain), Risk = S.
 
-### 3. Atomic Updates via PTBs
-Market resolution triggers a **Programmable Transaction Block (PTB)** that atomically:
-1.  Resolves the market.
-2.  Settles incentives.
-3.  Updates each user’s calibration object.
+This mechanism forces users to perform an internal risk assessment. Overconfidence at the individual trade level is immediately punished by larger potential losses.
 
-This guarantees no partial updates or exploitable intermediate states.
+### Settlement
+Markets settle via a zero-sum redistribution of risk capital.
+Let $R_L$ be the total risk pledged by the losing side.
+Let $r_i$ be the risk pledged by winning user $i$.
 
----
+The payout for user $i$ is:
+> $$ \text{Payout}_i = \frac{r_i}{\sum r_{\text{winners}}} \times R_L $$
+>
+> $$ \text{Net}_i = \text{Payout}_i - r_i $$
 
-## Oracle & Automation
-
-Markets resolve via an automated oracle pipeline:
-1.  **Event-Driven:** A node listener watches `MarketCreated` events on Sui.
-2.  **AI Judge:** An AI Agent (Llama 3 via Groq) researches real-world data to determine truth (YES/NO).
-3.  **On-Chain Execution:** The agent triggers the `admin_resolve` function on-chain.
-
-This removes slow, manual governance while preserving deterministic, verifiable outcomes.
+**Implication:** Being "right" is necessary but not sufficient for profit. A user must be "right" relative to the consensus. This structure ensures that payouts flow from the overconfident/wrong to the calibrated/correct.
 
 ---
 
-## Why This Matters
+## Model 2: Proof of Calibration (Reputation)
 
-Calibr shifts DeFi from **capital-dominant systems** to **skill-aware systems**.
-It introduces a reusable signal that answers:
-*   *Who should we trust?*
-*   *Whose judgment deserves weight?*
-*   *Who has earned higher leverage?*
+While Model 1 handles immediate incentives, Model 2 handles long-term signal preservation.
+After each resolved market, a user's on-chain reputation is updated using a **Proper Scoring Rule** (Brier-style logic).
 
-**Proof of Calibration** is a new primitive that can be composed across **DAO Governance**, **Undercollateralized Lending**, and **Risk Assessment**.
+Let outcome $o \in \{0,1\}$ and declared confidence $c$.
+
+> 1. **Calculate Loss:**
+>    $$ \text{Loss} = (c - o)^2 $$
+>
+> 2. **Calculate Delta:**
+>    $$ \Delta\text{Skill} = 1 - \text{Loss} $$
+>
+> 3. **Update Reputation (Exponential Moving Average):**
+>    $$ \text{Skill}_t = \alpha \cdot \text{Skill}_{t-1} + (1 - \alpha) \cdot \Delta\text{Skill} $$
+
+### Properties
+*   **Overconfidence Penalty:** Claiming 90% confidence and being wrong results in a massive penalty $(0.9 - 0)^2 = 0.81$ loss.
+*   **Calculated Caution:** Being unsure (50%) results in a stable minimal update, preserving skill rather than destroying it.
+*   **Path Dependence:** Reputation must be built over time. It cannot be purchased, flash-loaned, or easily farmed by Sybils.
+
+---
+
+## Architecture
+
+Calibr leverages the **Sui Object Model** to implement this logic efficiently.
+
+*   **Owned Objects (Reputation):** Each user's history is stored in a `UserProfile` object owned by their address. This ensures reputation is self-sovereign and non-transferable.
+*   **Shared Objects (Markets):** Prediction markets are independent shared objects. This allows thousands of markets to operate in parallel without global state contention.
+*   **Atomic Updates:** Market resolution triggers a Programmable Transaction Block (PTB) that atomically resolves the market, calculates Model 1 incentives, and updates Model 2 reputation scores in a single finalized block.
+
+---
+
+## Oracle Assumptions
+
+Markets are resolved via an automated, verifiable pipeline.
+1.  **Source:** External ground truth (Price Feeds, Event APIs).
+2.  **Resolution:** An off-chain node (running robust LLM logic + heuristic checks) detects definitive outcomes.
+3.  **Verification:** The node submits a signed transaction to the `admin_resolve` function.
+    *   *Note: Future iterations will implement a decentralized oracle network (e.g., UMA/Switchboard) for trustless resolution.*
+
+---
+
+## Composability
+
+**Proof of Calibration** is a generalized primitive. The `reputation_score` exposed by the `UserProfile` object can be consumed by other protocols to:
+*   **Governance:** Weight votes by domain-specific accuracy rather than token holdings.
+*   **Risk:** Offer lower collateral ratios to users with high calibration scores.
+*   **Access:** Gate access to high-stakes or institutional markets.
 
 ---
 
 ## Status
 
-*   ✅ **Fully working prototype** on Sui Testnet.
-*   ✅ **On-chain reputation updates** via Brier Score logic.
-*   ✅ **Automated AI Oracle** resolution.
-*   ✅ **End-to-end demo** ready.
+*   **Contracts:** Fully implemented in Sui Move (Testnet).
+*   **Incentives:** Model 1 & 2 logic operational.
+*   **Frontend:** Live prediction interface with real-time feedback.
+*   **Oracle:** Automated "AI Referee" resolving markets.
 
 ---
 
-## Run It Yourself
+## Run Locally
 
-### 1. Clone & Install
 ```bash
 git clone https://github.com/Calibrhq/calibr-app.git
 cd calibr-app
 npm install
-```
-
-### 2. Configure Environment
-```bash
 cp .env.example .env
-# Add your GROQ_API_KEY and SUI_PRIVATE_KEY
-```
 
-### 3. Start
-```bash
-# Start Frontend
+# Start App
 npm run dev
-
-# Start AI Oracle (in separate terminal)
-npm run start:oracle
 ```
