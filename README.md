@@ -1,12 +1,6 @@
 
 # ⚡ Calibr
-### **The Reputation Layer for Truth (Built on Sui)**
-
-![Calibr Banner](https://github.com/user-attachments/assets/placeholder-banner.png)
-
-> **🏆 Built for EthGlobal HackMoney 2025**  
-> *Targeting: Best Use of Sui (1st Prize) & EthGlobal Finalist*
-
+### **The Reputation Layer for Truth**
 ---
 
 ## 🛑 The Problem: "Sure" vs "Maybe"
