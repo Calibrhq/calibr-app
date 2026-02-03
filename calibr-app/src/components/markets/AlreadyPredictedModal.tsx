@@ -71,7 +71,7 @@ export function AlreadyPredictedModal({
                                         <CheckCircle2 className="w-8 h-8 text-blue-400" />
                                     </div>
                                     <h3 className="text-xl font-bold text-white mb-2">
-                                        You've Already Predicted
+                                        You&apos;ve Already Predicted
                                     </h3>
                                     <p className="text-slate-400 text-sm max-w-xs">
                                         Each user can only place one prediction per market for fair calibration scoring.
@@ -113,7 +113,7 @@ export function AlreadyPredictedModal({
                                 {/* Market question reminder */}
                                 <div className="bg-slate-800/50 rounded-lg p-3 mb-6 border border-slate-700/50">
                                     <p className="text-sm text-slate-300 line-clamp-2">
-                                        "{marketQuestion}"
+                                        &quot;{marketQuestion}&quot;
                                     </p>
                                 </div>
 

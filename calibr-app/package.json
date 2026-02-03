@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "start:oracle": "npx ts-node --esm --skip-project scripts/ai-oracle.ts",
     "lint": "next lint"
   },
   "dependencies": {

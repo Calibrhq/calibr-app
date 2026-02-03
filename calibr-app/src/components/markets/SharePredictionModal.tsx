@@ -151,7 +151,7 @@ export function SharePredictionModal({
                                 {/* Footer Info */}
                                 <div className="mt-auto transform translate-z-10 bg-secondary/30 -mx-6 -mb-6 p-4 border-t border-border/50">
                                     <p className="text-xs text-muted-foreground font-medium line-clamp-2 mb-3 leading-relaxed">
-                                        "{question}"
+                                        &quot;{question}&quot;
                                     </p>
                                     <div className="flex items-center justify-between text-[10px] text-muted-foreground/80 font-mono uppercase">
                                         <span className="flex items-center gap-1">

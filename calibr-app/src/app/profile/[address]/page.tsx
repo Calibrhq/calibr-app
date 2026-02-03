@@ -155,7 +155,7 @@ export default function PublicProfilePage({ params }: { params: { address: strin
         return (
             <div className="container py-20 text-center">
                 <h1 className="text-2xl font-bold mb-2">User Not Found</h1>
-                <p className="text-muted-foreground">This address hasn't created a profile yet.</p>
+                <p className="text-muted-foreground">This address hasn&apos;t created a profile yet.</p>
             </div>
         );
     }

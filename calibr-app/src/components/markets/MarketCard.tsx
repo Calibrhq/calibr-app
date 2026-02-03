@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { ChevronRight, Clock, TrendingUp, Users } from "lucide-react";
+import { ChevronRight, Clock, TrendingUp, Users, Brain } from "lucide-react";
 import { CountdownTimer } from "@/components/ui/CountdownTimer";
 
 interface MarketCardProps {
@@ -14,6 +14,7 @@ interface MarketCardProps {
   resolveDate?: string;
   participants?: number;
   status?: "active" | "resolving" | "resolved";
+  isAiResolved?: boolean;
 }
 
 export function MarketCard({
@@ -26,6 +27,7 @@ export function MarketCard({
   resolveDate,
   participants,
   status = "active",
+  isAiResolved = true, // Default to true for hackathon to show off AI
 }: MarketCardProps) {
   const noPercentage = 100 - yesPercentage;
 
@@ -62,6 +64,14 @@ export function MarketCard({
               <span className="px-2.5 py-1 text-xs font-medium rounded-md bg-secondary text-secondary-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
                 {category}
               </span>
+
+              {isAiResolved && (
+                <span className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium rounded-md bg-purple-500/10 text-purple-500 border border-purple-500/20">
+                  <Brain className="h-3 w-3" />
+                  AI Resolved
+                </span>
+              )}
+
               {isTrending && (
                 <span className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium rounded-md bg-primary/10 text-primary">
                   <span className="relative flex h-1.5 w-1.5">

@@ -40,7 +40,7 @@ export function PredictionSimulator() {
                                 : "text-muted-foreground hover:text-foreground"
                         )}
                     >
-                        I'm Right
+                        I&apos;m Right
                     </button>
                     <button
                         onClick={() => setOutcome("incorrect")}
@@ -51,7 +51,7 @@ export function PredictionSimulator() {
                                 : "text-muted-foreground hover:text-foreground"
                         )}
                     >
-                        I'm Wrong
+                        I&apos;m Wrong
                     </button>
                 </div>
             </div>

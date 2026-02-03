@@ -325,7 +325,7 @@ export function PredictionPanel({ marketId, question, onPredictionSuccess }: Pre
                 <CheckCircle2 className="w-5 h-5 text-blue-500" />
               </div>
               <div>
-                <p className="font-medium text-sm">You've already predicted on this market</p>
+                <p className="font-medium text-sm">You&apos;ve already predicted on this market</p>
                 <p className="text-xs text-muted-foreground">One prediction per market ensures fair calibration</p>
               </div>
             </div>
