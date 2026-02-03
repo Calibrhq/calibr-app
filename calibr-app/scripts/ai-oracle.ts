@@ -246,7 +246,18 @@ async function getLLMOutcome(question: string): Promise<"YES" | "NO" | "UNKNOWN"
     You are the impartial AI Referee for a prediction market.
     Question: "${question}"
     Current Date: ${new Date().toISOString()}
-    Output Rules: Respond ONLY with one word: "YES", "NO", or "UNKNOWN".
+
+    CRITICAL INSTRUCTIONS:
+    1. **Analyze Truth:** Use your internal knowledge base to determine the truth.
+    2. **Be Decisive:** If perfect data is missing, make a probabilistic judgment.
+       - "Will SUI reach $20?" -> SUI is currently ~$3. $20 is a >=500% pump in hours. Highly Unlikely -> "NO".
+       - "Will Bitcoin cross $100k?" -> If close, make a call.
+    3. **Tie-Breaker:** If the probability is exactly 50/50, default to "NO" (Status Quo).
+    4. **Format:** Your output must be a SINGLE WORD: "YES" or "NO". Do not output "UNKNOWN" unless the question is completely unintelligible.
+
+    Rules:
+    - SUI Price is approx $1.50 - $4.00 range currently.
+    - BTC Price is approx $90k - $100k range.
     `;
 
     try {
@@ -256,8 +267,15 @@ async function getLLMOutcome(question: string): Promise<"YES" | "NO" | "UNKNOWN"
             temperature: 0,
         });
 
-        const text = completion.choices[0].message.content?.trim().toUpperCase();
-        if (text === "YES" || text === "NO") return text;
+        const text = completion.choices[0].message.content?.trim().toUpperCase() || "";
+        console.log(`      🤖 Raw AI Response: "${text}"`);
+
+        // Robust Parsing using Regex (Finds "YES" or "NO" even if there's extra text)
+        const match = text.match(/\b(YES|NO)\b/);
+        if (match) {
+            return match[1] as "YES" | "NO";
+        }
+
         return "UNKNOWN";
 
     } catch (e) {
