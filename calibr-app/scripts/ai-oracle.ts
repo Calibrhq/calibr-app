@@ -285,4 +285,17 @@ async function getLLMOutcome(question: string): Promise<"YES" | "NO" | "UNKNOWN"
 }
 
 // Start
+// --- 7. HEALTH CHECK (Make Render Happy) ---
+import http from "http";
+
+const PORT = process.env.PORT || 3000;
+http.createServer((req, res) => {
+    res.writeHead(200);
+    res.end("AI Oracle is Awake 👁️");
+}).listen(PORT, () => {
+    console.log(`\n🌍 Health Check Server runnning on port ${PORT}`);
+    console.log(`   (Keep this URL pining to prevent Render from sleeping)\n`);
+});
+
+// Start Main Logic
 main().catch(console.error);
