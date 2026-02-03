@@ -1,4 +1,4 @@
-import { SuiClient, getFullnodeUrl } from "@mysten/sui/client";
+import { SuiJsonRpcClient as SuiClient, getJsonRpcFullnodeUrl } from "@mysten/sui/jsonRpc";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { Transaction } from "@mysten/sui/transactions";
 import OpenAI from "openai";
@@ -8,19 +8,35 @@ dotenv.config();
 
 // --- CONFIGURATION ---
 const NETWORK = "testnet";
-const PACKAGE_ID = "0xf4963058f286a7da4a0e8b5e766523815f4d5f60b6e3cecdc10b32fbf72ccf70";
-const ADMIN_CAP_ID = "0xc293b77b644f967095f155b8bf162458e296f5d3023e2f91e4b2b05ed4d763bf";
+// Replace with your latest package ID if changed
+const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || "0xf4963058f286a7da4a0e8b5e766523815f4d5f60b6e3cecdc10b32fbf72ccf70";
+const ADMIN_CAP_ID = process.env.ADMIN_CAP_ID || "0xc293b77b644f967095f155b8bf162458e296f5d3023e2f91e4b2b05ed4d763bf";
 const MODULE_NAME = "market";
-const MARKET_TYPE = `${PACKAGE_ID}::calibr::Market`;
 
-const client = new SuiClient({ url: getFullnodeUrl(NETWORK) });
+// Polling Interval
+const POLLING_INTERVAL_MS = 60 * 1000; // 1 minute
+
+// AI CONFIGURATION
+// "MOCK" = Free, deterministic (Great for Demos)
+// "OPENAI" = Needs API Key + Credits
+const AI_PROVIDER: "MOCK" | "OPENAI" = "MOCK";
+const MODEL = "gpt-3.5-turbo";
+
+const client = new SuiClient({ url: getJsonRpcFullnodeUrl(NETWORK), network: NETWORK });
 
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: process.env.OPENAI_API_KEY || "sk-placeholder", // Safe for Mock mode
 });
 
+// In-memory cache of known market IDs to avoid re-fetching events constantly
+const knownMarkets = new Set<string>();
+
 async function main() {
-    console.log("🤖 AI Oracle Agent Starting...");
+    console.log(`🤖 Calibr AI Oracle Agent Starting...`);
+    console.log(`🔹 Mode: ${AI_PROVIDER} ${AI_PROVIDER === "OPENAI" ? `(${MODEL})` : "(Zero Cost)"}`);
+    console.log(`🔹 Network: ${NETWORK}`);
+    console.log(`🔹 Package: ${PACKAGE_ID.slice(0, 10)}...`);
+    console.log(`🔹 Polling Interval: ${POLLING_INTERVAL_MS / 1000}s`);
 
     // 1. Setup Wallet
     const privateKey = process.env.ADMIN_PRIVATE_KEY;
@@ -31,93 +47,134 @@ async function main() {
     const keypair = Ed25519Keypair.fromSecretKey(privateKey);
     console.log(`🔹 Admin Address: ${keypair.getPublicKey().toSuiAddress()}`);
 
-    // 2. Fetch Active Markets
-    console.log("🔍 Scanning for markets...");
-    // Note: In production we'd use an indexer. Here we fetch filtered objects if possible or just recent shared objects.
-    // For simplicity efficiently, we'll try to get objects owned by the package or just known markets if we had a registry.
-    // Since we don't have a registry, I'll fetch *some* shared objects or rely on the user passing IDs for now, 
-    // BUT for the "Magic" demo, let's try to query events or just assume we know the IDs. 
-    // actually, `getOwnedObjects` won't work for shared objects. 
-    // We will use `client.getDetails` if we knew IDs. 
-    // BETTER STRATEGY FOR HACKATHON: Hardcode the market ID we want to resolve OR fetch events to find markets.
-    // Let's implement a "Resolve Specific Market" mode or "Scan Recent" if we can.
+    // Initial scan
+    await scanForMarkets();
 
-    // Fallback: We'll accept a MARKET_ID arg, or try to find some. 
-    // To make it truly autonomous, we would need a registry. 
-    // For this script, I'll fetch events 'MarketCreated' to find ID.
+    // Start Loop
+    setInterval(async () => {
+        try {
+            await scanForMarkets();
+            await processMarkets(keypair);
+        } catch (e) {
+            console.error("⚠️ Error in loop:", e);
+        }
+    }, POLLING_INTERVAL_MS);
 
-    const events = await client.queryEvents({
-        query: { MoveModule: { package: PACKAGE_ID, module: MODULE_NAME } },
-        limit: 10,
-        order: "descending"
-    });
+    // Run immediately first time
+    await processMarkets(keypair);
+}
 
-    console.log(`Found ${events.data.length} recent market events.`);
+// --- 1. DISCOVERY ---
+async function scanForMarkets() {
+    console.log("🔍 Scanning for new markets...");
+    try {
+        const events = await client.queryEvents({
+            query: { MoveModule: { package: PACKAGE_ID, module: MODULE_NAME } },
+            limit: 50,
+            order: "descending"
+        });
 
-    for (const event of events.data) {
-        if (event.type.includes("MarketCreated")) {
-            const marketId = (event.parsedJson as any).market_id;
-            await checkAndResolveMarket(marketId, keypair);
+        for (const event of events.data) {
+            if (event.type.includes("MarketCreated")) {
+                const marketId = (event.parsedJson as any).market_id;
+                if (!knownMarkets.has(marketId)) {
+                    console.log(`   🆕 Found Market: ${marketId.slice(0, 8)}...`);
+                    knownMarkets.add(marketId);
+                }
+            }
+        }
+    } catch (error) {
+        console.error("   ❌ Error scanning events:", error);
+    }
+}
+
+// --- 2. PROCESSING ---
+async function processMarkets(keypair: Ed25519Keypair) {
+    console.log(`🔄 Processing ${knownMarkets.size} known markets...`);
+
+    for (const marketId of Array.from(knownMarkets)) {
+        try {
+            const marketObj = await client.getObject({
+                id: marketId,
+                options: { showContent: true }
+            });
+
+            if (!marketObj.data || !marketObj.data.content) {
+                knownMarkets.delete(marketId);
+                continue;
+            }
+
+            const fields = (marketObj.data.content as any).fields;
+            const questionBytes = fields.question;
+            const isLocked = fields.locked;
+            const isResolved = fields.resolved;
+            const deadline = parseInt(fields.deadline);
+            const question = Buffer.from(questionBytes).toString('utf8');
+
+            // CLEANUP: If resolved, stop tracking
+            if (isResolved) {
+                knownMarkets.delete(marketId);
+                continue;
+            }
+
+            console.log(`   📄 Checking: "${question.slice(0, 40)}..."`);
+            const now = Date.now();
+
+            // A. CHECK IF NEEDS LOCKING
+            if (!isLocked && now > deadline) {
+                console.log(`   🔒 Deadline expired! Locking market...`);
+                await lockMarket(marketId, keypair);
+                console.log(`   ⏳ Waiting for lock to finalize...`);
+                await new Promise(r => setTimeout(r, 2000));
+            }
+            else if (!isLocked) {
+                console.log(`      Active (Limit: ${new Date(deadline).toLocaleTimeString()})`);
+                continue; // Still active, skip
+            }
+
+            // B. RESOLVE (If Locked)
+            console.log("   🧠 AI Agent analyzing truth...");
+            const outcome = await getOutcome(question);
+
+            if (outcome === "UNKNOWN") {
+                console.log("   🤷‍♂️ AI unsure. Skipping.");
+                continue;
+            }
+
+            console.log(`   💡 Verdict: ${outcome}`);
+            await resolveMarket(marketId, outcome === "YES", keypair);
+
+            // Mark as done
+            knownMarkets.delete(marketId);
+
+        } catch (e) {
+            console.error(`   ❌ Error processing market ${marketId}:`, e);
         }
     }
 }
 
-async function checkAndResolveMarket(marketId: string, keypair: Ed25519Keypair) {
-    // 3. Get Market Data
-    const marketObj = await client.getObject({
-        id: marketId,
-        options: { showContent: true }
+// --- 3. ACTIONS ---
+
+async function lockMarket(marketId: string, keypair: Ed25519Keypair) {
+    const tx = new Transaction();
+    tx.moveCall({
+        target: `${PACKAGE_ID}::market::lock_market`,
+        arguments: [
+            tx.object(ADMIN_CAP_ID),
+            tx.object(marketId),
+        ]
     });
 
-    if (!marketObj.data || !marketObj.data.content) return;
-
-    const fields = (marketObj.data.content as any).fields;
-    const questionBytes = fields.question;
-    const isLocked = fields.locked;
-    const isResolved = fields.resolved;
-
-    // Convert generic vector<u8> to string
-    const question = Buffer.from(questionBytes).toString('utf8');
-
-    console.log(`\n📄 Market: ${question} [ID: ${marketId.slice(0, 6)}...]`);
-    console.log(`   Status: Locked=${isLocked}, Resolved=${isResolved}`);
-
-    // FILTER: Only resolve LOCKED and UNRESOLVED markets
-    if (!isLocked || isResolved) {
-        console.log("   ⏭️  Skipping (Not locked or already resolved)");
-        return;
-    }
-
-    // 4. AI Analysis
-    console.log("   🧠 AI Agent analyzing truth...");
-    const prompt = `
-    You are an AI Oracle for a Prediction Market. 
-    Question: "${question}"
-    
-    Task: Search your knowledge base (or simulate a search) to determine the outcome.
-    Rules:
-    - Answer ONLY "YES" or "NO".
-    - If strictly unknown, answer "UNKNOWN".
-    - Be decisive based on latest data up to 2025/2026.
-    `;
-
-    const completion = await openai.chat.completions.create({
-        messages: [{ role: "user", content: prompt }],
-        model: "gpt-4-turbo",
+    const result = await client.signAndExecuteTransaction({
+        signer: keypair,
+        transaction: tx,
+        options: { showEffects: true }
     });
+    console.log(`      ✅ Locked! Digest: ${result.digest}`);
+}
 
-    const decision = completion.choices[0].message.content?.trim().toUpperCase();
-    console.log(`   💡 AI Decision: ${decision}`);
-
-    if (decision !== "YES" && decision !== "NO") {
-        console.log("   ⚠️  AI could not decide. Skipping.");
-        return;
-    }
-
-    const outcomeBool = decision === "YES";
-
-    // 5. Execute Resolution
-    console.log(`   🚀 Submitting resolution tx (Outcome: ${decision})...`);
+async function resolveMarket(marketId: string, outcome: boolean, keypair: Ed25519Keypair) {
+    console.log(`      🚀 Submitting Resolution: ${outcome ? "YES" : "NO"}...`);
 
     const tx = new Transaction();
     tx.moveCall({
@@ -125,20 +182,70 @@ async function checkAndResolveMarket(marketId: string, keypair: Ed25519Keypair) 
         arguments: [
             tx.object(ADMIN_CAP_ID),
             tx.object(marketId),
-            tx.pure.bool(outcomeBool)
+            tx.pure.bool(outcome)
         ]
     });
 
-    try {
-        const result = await client.signAndExecuteTransaction({
-            signer: keypair,
-            transaction: tx,
-            options: { showEffects: true }
-        });
-        console.log(`   ✅ Resolved! Tx Digest: ${result.digest}`);
-    } catch (e) {
-        console.error(`   ❌ Verification Failed: ${e}`);
+    const result = await client.signAndExecuteTransaction({
+        signer: keypair,
+        transaction: tx,
+        options: { showEffects: true }
+    });
+    console.log(`      ✅ RESOLVED! Digest: ${result.digest}`);
+}
+
+// --- 4. INTELLIGENCE (ROUTER) ---
+async function getOutcome(question: string): Promise<"YES" | "NO" | "UNKNOWN"> {
+    if (AI_PROVIDER === "MOCK") {
+        return getMockOutcome(question);
+    } else {
+        return getOpenAIOutcome(question);
     }
 }
 
+// --- 5. MOCK AI (FREE) ---
+async function getMockOutcome(question: string): Promise<"YES" | "NO" | "UNKNOWN"> {
+    console.log("      (Running in MOCK mode - Deterministic simulation)");
+    await new Promise(r => setTimeout(r, 1000)); // Simulate thinking
+
+    // Deterministic logic based on question length for demo consistency
+    // Even length -> YES, Odd length -> NO
+    // Or if contains certain keywords
+    const lower = question.toLowerCase();
+
+    if (lower.includes("no") || lower.includes("fail") || lower.includes("lose")) return "NO";
+    if (lower.includes("yes") || lower.includes("pass") || lower.includes("win")) return "YES";
+
+    // Fallback: Deterministic based on char code sum
+    const sum = question.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return sum % 2 === 0 ? "YES" : "NO";
+}
+
+// --- 6. OPENAI (REAL) ---
+async function getOpenAIOutcome(question: string): Promise<"YES" | "NO" | "UNKNOWN"> {
+    const prompt = `
+    You are the impartial AI Referee for a prediction market.
+    Question: "${question}"
+    Current Date: ${new Date().toISOString()}
+    Output Rules: Respond ONLY with one word: "YES", "NO", or "UNKNOWN".
+    `;
+
+    try {
+        const completion = await openai.chat.completions.create({
+            messages: [{ role: "user", content: prompt }],
+            model: MODEL,
+            temperature: 0,
+        });
+
+        const text = completion.choices[0].message.content?.trim().toUpperCase();
+        if (text === "YES" || text === "NO") return text;
+        return "UNKNOWN";
+
+    } catch (e) {
+        console.error("      ⚠️ OpenAI Error:", e);
+        return "UNKNOWN";
+    }
+}
+
+// Start
 main().catch(console.error);
