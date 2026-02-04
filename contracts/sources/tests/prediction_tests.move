@@ -47,7 +47,7 @@ module calibr::prediction_tests {
         {
             let admin_cap = ts::take_from_sender<AdminCap>(scenario);
             let ctx = ts::ctx(scenario);
-            market::create_market(&admin_cap, question, ADMIN, ctx);
+            market::create_market(&admin_cap, question, 0, ADMIN, ctx);
             ts::return_to_sender(scenario, admin_cap);
         };
     }

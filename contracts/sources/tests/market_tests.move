@@ -45,6 +45,7 @@ module calibr::market_tests {
             market::create_market(
                 &admin_cap,
                 b"Will BTC exceed $100k by Dec 2025?",
+                0, // deadline
                 ADMIN,
                 ctx
             );
@@ -82,7 +83,7 @@ module calibr::market_tests {
         {
             let admin_cap = ts::take_from_sender<AdminCap>(&scenario);
             let ctx = ts::ctx(&mut scenario);
-            market::create_market(&admin_cap, b"Test market", ADMIN, ctx);
+            market::create_market(&admin_cap, b"Test market", 0, ADMIN, ctx);
             ts::return_to_sender(&scenario, admin_cap);
         };
         
@@ -119,7 +120,7 @@ module calibr::market_tests {
         {
             let admin_cap = ts::take_from_sender<AdminCap>(&scenario);
             let ctx = ts::ctx(&mut scenario);
-            market::create_market(&admin_cap, b"Test market", ADMIN, ctx);
+            market::create_market(&admin_cap, b"Test market", 0, ADMIN, ctx);
             ts::return_to_sender(&scenario, admin_cap);
         };
         
@@ -163,7 +164,7 @@ module calibr::market_tests {
         {
             let admin_cap = ts::take_from_sender<AdminCap>(&scenario);
             let ctx = ts::ctx(&mut scenario);
-            market::create_market(&admin_cap, b"Test market", ADMIN, ctx);
+            market::create_market(&admin_cap, b"Test market", 0, ADMIN, ctx);
             ts::return_to_sender(&scenario, admin_cap);
         };
         
@@ -213,7 +214,7 @@ module calibr::market_tests {
             let ctx = ts::ctx(&mut scenario);
             
             // Should fail - empty question
-            market::create_market(&admin_cap, b"", ADMIN, ctx);
+            market::create_market(&admin_cap, b"", 0, ADMIN, ctx);
             
             ts::return_to_sender(&scenario, admin_cap);
         };
@@ -231,7 +232,7 @@ module calibr::market_tests {
         {
             let admin_cap = ts::take_from_sender<AdminCap>(&scenario);
             let ctx = ts::ctx(&mut scenario);
-            market::create_market(&admin_cap, b"Test", ADMIN, ctx);
+            market::create_market(&admin_cap, b"Test", 0, ADMIN, ctx);
             ts::return_to_sender(&scenario, admin_cap);
         };
         
@@ -271,7 +272,7 @@ module calibr::market_tests {
         {
             let admin_cap = ts::take_from_sender<AdminCap>(&scenario);
             let ctx = ts::ctx(&mut scenario);
-            market::create_market(&admin_cap, b"Test", ADMIN, ctx);
+            market::create_market(&admin_cap, b"Test", 0, ADMIN, ctx);
             ts::return_to_sender(&scenario, admin_cap);
         };
         
@@ -301,7 +302,7 @@ module calibr::market_tests {
         {
             let admin_cap = ts::take_from_sender<AdminCap>(&scenario);
             let ctx = ts::ctx(&mut scenario);
-            market::create_market(&admin_cap, b"Test", ADMIN, ctx);
+            market::create_market(&admin_cap, b"Test", 0, ADMIN, ctx);
             ts::return_to_sender(&scenario, admin_cap);
         };
         
@@ -354,7 +355,7 @@ module calibr::market_tests {
         {
             let admin_cap = ts::take_from_sender<AdminCap>(&scenario);
             let ctx = ts::ctx(&mut scenario);
-            market::create_market(&admin_cap, b"Test", ADMIN, ctx);
+            market::create_market(&admin_cap, b"Test", 0, ADMIN, ctx);
             ts::return_to_sender(&scenario, admin_cap);
         };
         
@@ -398,7 +399,7 @@ module calibr::market_tests {
         {
             let admin_cap = ts::take_from_sender<AdminCap>(&scenario);
             let ctx = ts::ctx(&mut scenario);
-            market::create_market(&admin_cap, b"Test", ADMIN, ctx);
+            market::create_market(&admin_cap, b"Test", 0, ADMIN, ctx);
             ts::return_to_sender(&scenario, admin_cap);
         };
         
@@ -459,7 +460,7 @@ module calibr::market_tests {
         {
             let admin_cap = ts::take_from_sender<AdminCap>(&scenario);
             let ctx = ts::ctx(&mut scenario);
-            market::create_market(&admin_cap, b"Test", ADMIN, ctx);
+            market::create_market(&admin_cap, b"Test", 0, ADMIN, ctx);
             ts::return_to_sender(&scenario, admin_cap);
         };
         

@@ -43,7 +43,7 @@ module calibr::integration_tests {
         ts::next_tx(scenario, ADMIN);
         {
             let admin_cap = ts::take_from_sender<AdminCap>(scenario);
-            market::create_market(&admin_cap, question, ADMIN, ts::ctx(scenario));
+            market::create_market(&admin_cap, question, 0, ADMIN, ts::ctx(scenario));
             ts::return_to_sender(scenario, admin_cap);
         };
     }

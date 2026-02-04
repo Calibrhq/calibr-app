@@ -1,0 +1,407 @@
+[NOTE] Dependencies on Sui, MoveStdlib, Bridge, DeepBook, and SuiSystem are automatically added, but this feature is disabled for your package because you have explicitly included dependencies on Sui. Consider removing these dependencies from `Move.toml`.
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+   [0m[34m┌─[0m ./sources/calibr.move:16:23
+   [0m[34m│[0m
+[0m[34m16[0m [0m[34m│[0m     use sui::object::{[0m[33mSelf[0m, UID, ID};
+   [0m[34m│[0m                       [0m[33m^^^^[0m [0m[33mUnnecessary alias 'object' for module 'sui::object'. This alias is provided by default[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+   [0m[34m┌─[0m ./sources/calibr.move:16:29
+   [0m[34m│[0m
+[0m[34m16[0m [0m[34m│[0m     use sui::object::{Self, [0m[33mUID[0m, ID};
+   [0m[34m│[0m                             [0m[33m^^^[0m [0m[33mUnnecessary alias 'UID' for module member 'sui::object::UID'. This alias is provided by default[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+   [0m[34m┌─[0m ./sources/calibr.move:16:34
+   [0m[34m│[0m
+[0m[34m16[0m [0m[34m│[0m     use sui::object::{Self, UID, [0m[33mID[0m};
+   [0m[34m│[0m                                  [0m[33m^^[0m [0m[33mUnnecessary alias 'ID' for module member 'sui::object::ID'. This alias is provided by default[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+   [0m[34m┌─[0m ./sources/calibr.move:17:26
+   [0m[34m│[0m
+[0m[34m17[0m [0m[34m│[0m     use sui::tx_context::[0m[33mTxContext[0m;
+   [0m[34m│[0m                          [0m[33m^^^^^^^^^[0m [0m[33mUnnecessary alias 'TxContext' for module member 'sui::tx_context::TxContext'. This alias is provided by default[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+   [0m[34m┌─[0m ./sources/calibr.move:18:22
+   [0m[34m│[0m
+[0m[34m18[0m [0m[34m│[0m     use std::option::[0m[33mOption[0m;
+   [0m[34m│[0m                      [0m[33m^^^^^^[0m [0m[33mUnnecessary alias 'Option' for module member 'std::option::Option'. This alias is provided by default[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09011][0m[1m: unused constant[0m
+   [0m[34m┌─[0m ./sources/calibr.move:61:11
+   [0m[34m│[0m
+[0m[34m61[0m [0m[34m│[0m     const [0m[33mEInvalidConfidence[0m: u64 = 0;
+   [0m[34m│[0m           [0m[33m^^^^^^^^^^^^^^^^^^[0m [0m[33mThe constant 'EInvalidConfidence' is never used. Consider removing it.[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(unused_const)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09011][0m[1m: unused constant[0m
+   [0m[34m┌─[0m ./sources/calibr.move:64:11
+   [0m[34m│[0m
+[0m[34m64[0m [0m[34m│[0m     const [0m[33mEProfileAlreadyExists[0m: u64 = 1;
+   [0m[34m│[0m           [0m[33m^^^^^^^^^^^^^^^^^^^^^[0m [0m[33mThe constant 'EProfileAlreadyExists' is never used. Consider removing it.[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(unused_const)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09011][0m[1m: unused constant[0m
+   [0m[34m┌─[0m ./sources/calibr.move:67:11
+   [0m[34m│[0m
+[0m[34m67[0m [0m[34m│[0m     const [0m[33mEMarketNotOpen[0m: u64 = 2;
+   [0m[34m│[0m           [0m[33m^^^^^^^^^^^^^^[0m [0m[33mThe constant 'EMarketNotOpen' is never used. Consider removing it.[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(unused_const)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09011][0m[1m: unused constant[0m
+   [0m[34m┌─[0m ./sources/calibr.move:70:11
+   [0m[34m│[0m
+[0m[34m70[0m [0m[34m│[0m     const [0m[33mEMarketNotResolved[0m: u64 = 3;
+   [0m[34m│[0m           [0m[33m^^^^^^^^^^^^^^^^^^[0m [0m[33mThe constant 'EMarketNotResolved' is never used. Consider removing it.[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(unused_const)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09011][0m[1m: unused constant[0m
+   [0m[34m┌─[0m ./sources/calibr.move:73:11
+   [0m[34m│[0m
+[0m[34m73[0m [0m[34m│[0m     const [0m[33mEPredictionAlreadySettled[0m: u64 = 4;
+   [0m[34m│[0m           [0m[33m^^^^^^^^^^^^^^^^^^^^^^^^^[0m [0m[33mThe constant 'EPredictionAlreadySettled' is never used. Consider removing it.[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(unused_const)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09011][0m[1m: unused constant[0m
+   [0m[34m┌─[0m ./sources/calibr.move:76:11
+   [0m[34m│[0m
+[0m[34m76[0m [0m[34m│[0m     const [0m[33mEUnauthorized[0m: u64 = 5;
+   [0m[34m│[0m           [0m[33m^^^^^^^^^^^^^[0m [0m[33mThe constant 'EUnauthorized' is never used. Consider removing it.[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(unused_const)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09011][0m[1m: unused constant[0m
+   [0m[34m┌─[0m ./sources/calibr.move:79:11
+   [0m[34m│[0m
+[0m[34m79[0m [0m[34m│[0m     const [0m[33mEMarketLocked[0m: u64 = 6;
+   [0m[34m│[0m           [0m[33m^^^^^^^^^^^^^[0m [0m[33mThe constant 'EMarketLocked' is never used. Consider removing it.[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(unused_const)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09011][0m[1m: unused constant[0m
+   [0m[34m┌─[0m ./sources/calibr.move:82:11
+   [0m[34m│[0m
+[0m[34m82[0m [0m[34m│[0m     const [0m[33mEMarketAlreadyResolved[0m: u64 = 7;
+   [0m[34m│[0m           [0m[33m^^^^^^^^^^^^^^^^^^^^^^[0m [0m[33mThe constant 'EMarketAlreadyResolved' is never used. Consider removing it.[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(unused_const)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09011][0m[1m: unused constant[0m
+   [0m[34m┌─[0m ./sources/calibr.move:85:11
+   [0m[34m│[0m
+[0m[34m85[0m [0m[34m│[0m     const [0m[33mEConfidenceExceedsMax[0m: u64 = 8;
+   [0m[34m│[0m           [0m[33m^^^^^^^^^^^^^^^^^^^^^[0m [0m[33mThe constant 'EConfidenceExceedsMax' is never used. Consider removing it.[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(unused_const)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+    [0m[34m┌─[0m ./sources/market.move:207:23
+    [0m[34m│[0m
+[0m[34m207[0m [0m[34m│[0m     use sui::object::{[0m[33mSelf[0m, UID, ID};
+    [0m[34m│[0m                       [0m[33m^^^^[0m [0m[33mUnnecessary alias 'object' for module 'sui::object'. This alias is provided by default[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+    [0m[34m┌─[0m ./sources/market.move:207:29
+    [0m[34m│[0m
+[0m[34m207[0m [0m[34m│[0m     use sui::object::{Self, [0m[33mUID[0m, ID};
+    [0m[34m│[0m                             [0m[33m^^^[0m [0m[33mUnnecessary alias 'UID' for module member 'sui::object::UID'. This alias is provided by default[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+    [0m[34m┌─[0m ./sources/market.move:207:34
+    [0m[34m│[0m
+[0m[34m207[0m [0m[34m│[0m     use sui::object::{Self, UID, [0m[33mID[0m};
+    [0m[34m│[0m                                  [0m[33m^^[0m [0m[33mUnnecessary alias 'ID' for module member 'sui::object::ID'. This alias is provided by default[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09001][0m[1m: unused alias[0m
+    [0m[34m┌─[0m ./sources/market.move:207:34
+    [0m[34m│[0m
+[0m[34m207[0m [0m[34m│[0m     use sui::object::{Self, UID, [0m[33mID[0m};
+    [0m[34m│[0m                                  [0m[33m^^[0m [0m[33mUnused 'use' of alias 'ID'. Consider removing it[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(unused_use)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+    [0m[34m┌─[0m ./sources/market.move:208:27
+    [0m[34m│[0m
+[0m[34m208[0m [0m[34m│[0m     use sui::tx_context::{[0m[33mSelf[0m, TxContext};
+    [0m[34m│[0m                           [0m[33m^^^^[0m [0m[33mUnnecessary alias 'tx_context' for module 'sui::tx_context'. This alias is provided by default[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+    [0m[34m┌─[0m ./sources/market.move:208:33
+    [0m[34m│[0m
+[0m[34m208[0m [0m[34m│[0m     use sui::tx_context::{Self, [0m[33mTxContext[0m};
+    [0m[34m│[0m                                 [0m[33m^^^^^^^^^[0m [0m[33mUnnecessary alias 'TxContext' for module member 'sui::tx_context::TxContext'. This alias is provided by default[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+    [0m[34m┌─[0m ./sources/market.move:209:14
+    [0m[34m│[0m
+[0m[34m209[0m [0m[34m│[0m     use sui::[0m[33mtransfer[0m;
+    [0m[34m│[0m              [0m[33m^^^^^^^^[0m [0m[33mUnnecessary alias 'transfer' for module 'sui::transfer'. This alias is provided by default[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09011][0m[1m: unused constant[0m
+    [0m[34m┌─[0m ./sources/market.move:241:11
+    [0m[34m│[0m
+[0m[34m241[0m [0m[34m│[0m     const [0m[33mENotAdmin[0m: u64 = 300;
+    [0m[34m│[0m           [0m[33m^^^^^^^^^[0m [0m[33mThe constant 'ENotAdmin' is never used. Consider removing it.[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(unused_const)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09002][0m[1m: unused variable[0m
+    [0m[34m┌─[0m ./sources/market.move:599:13
+    [0m[34m│[0m
+[0m[34m599[0m [0m[34m│[0m         let [0m[33mwinner_risk[0m = calculate_winner_risk_total(market, outcome);
+    [0m[34m│[0m             [0m[33m^^^^^^^^^^^[0m [0m[33mUnused local variable 'winner_risk'. Consider removing or prefixing with an underscore: '_winner_risk'[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(unused_variable)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+    [0m[34m┌─[0m ./sources/prediction.move:104:23
+    [0m[34m│[0m
+[0m[34m104[0m [0m[34m│[0m     use sui::object::{[0m[33mSelf[0m, ID};
+    [0m[34m│[0m                       [0m[33m^^^^[0m [0m[33mUnnecessary alias 'object' for module 'sui::object'. This alias is provided by default[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09001][0m[1m: unused alias[0m
+    [0m[34m┌─[0m ./sources/prediction.move:104:23
+    [0m[34m│[0m
+[0m[34m104[0m [0m[34m│[0m     use sui::object::{[0m[33mSelf[0m, ID};
+    [0m[34m│[0m                       [0m[33m^^^^[0m [0m[33mUnused 'use' of alias 'object'. Consider removing it[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(unused_use)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+    [0m[34m┌─[0m ./sources/prediction.move:104:29
+    [0m[34m│[0m
+[0m[34m104[0m [0m[34m│[0m     use sui::object::{Self, [0m[33mID[0m};
+    [0m[34m│[0m                             [0m[33m^^[0m [0m[33mUnnecessary alias 'ID' for module member 'sui::object::ID'. This alias is provided by default[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09001][0m[1m: unused alias[0m
+    [0m[34m┌─[0m ./sources/prediction.move:104:29
+    [0m[34m│[0m
+[0m[34m104[0m [0m[34m│[0m     use sui::object::{Self, [0m[33mID[0m};
+    [0m[34m│[0m                             [0m[33m^^[0m [0m[33mUnused 'use' of alias 'ID'. Consider removing it[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(unused_use)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+    [0m[34m┌─[0m ./sources/prediction.move:105:27
+    [0m[34m│[0m
+[0m[34m105[0m [0m[34m│[0m     use sui::tx_context::{[0m[33mSelf[0m, TxContext};
+    [0m[34m│[0m                           [0m[33m^^^^[0m [0m[33mUnnecessary alias 'tx_context' for module 'sui::tx_context'. This alias is provided by default[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+    [0m[34m┌─[0m ./sources/prediction.move:105:33
+    [0m[34m│[0m
+[0m[34m105[0m [0m[34m│[0m     use sui::tx_context::{Self, [0m[33mTxContext[0m};
+    [0m[34m│[0m                                 [0m[33m^^^^^^^^^[0m [0m[33mUnnecessary alias 'TxContext' for module member 'sui::tx_context::TxContext'. This alias is provided by default[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+    [0m[34m┌─[0m ./sources/prediction.move:106:14
+    [0m[34m│[0m
+[0m[34m106[0m [0m[34m│[0m     use sui::[0m[33mtransfer[0m;
+    [0m[34m│[0m              [0m[33m^^^^^^^^[0m [0m[33mUnnecessary alias 'transfer' for module 'sui::transfer'. This alias is provided by default[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+    [0m[34m┌─[0m ./sources/prediction.move:107:14
+    [0m[34m│[0m
+[0m[34m107[0m [0m[34m│[0m     use std::[0m[33moption[0m;
+    [0m[34m│[0m              [0m[33m^^^^^^[0m [0m[33mUnnecessary alias 'option' for module 'std::option'. This alias is provided by default[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09011][0m[1m: unused constant[0m
+    [0m[34m┌─[0m ./sources/prediction.move:142:11
+    [0m[34m│[0m
+[0m[34m142[0m [0m[34m│[0m     const [0m[33mENoWinnerRisk[0m: u64 = 408;
+    [0m[34m│[0m           [0m[33m^^^^^^^^^^^^^[0m [0m[33mThe constant 'ENoWinnerRisk' is never used. Consider removing it.[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(unused_const)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+    [0m[34m┌─[0m ./sources/reputation.move:107:27
+    [0m[34m│[0m
+[0m[34m107[0m [0m[34m│[0m     use sui::tx_context::{[0m[33mSelf[0m, TxContext};
+    [0m[34m│[0m                           [0m[33m^^^^[0m [0m[33mUnnecessary alias 'tx_context' for module 'sui::tx_context'. This alias is provided by default[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+    [0m[34m┌─[0m ./sources/reputation.move:107:33
+    [0m[34m│[0m
+[0m[34m107[0m [0m[34m│[0m     use sui::tx_context::{Self, [0m[33mTxContext[0m};
+    [0m[34m│[0m                                 [0m[33m^^^^^^^^^[0m [0m[33mUnnecessary alias 'TxContext' for module member 'sui::tx_context::TxContext'. This alias is provided by default[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+    [0m[34m┌─[0m ./sources/reputation.move:108:14
+    [0m[34m│[0m
+[0m[34m108[0m [0m[34m│[0m     use sui::[0m[33mtransfer[0m;
+    [0m[34m│[0m              [0m[33m^^^^^^^^[0m [0m[33mUnnecessary alias 'transfer' for module 'sui::transfer'. This alias is provided by default[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+   [0m[34m┌─[0m ./sources/events.move:36:22
+   [0m[34m│[0m
+[0m[34m36[0m [0m[34m│[0m     use sui::object::[0m[33mID[0m;
+   [0m[34m│[0m                      [0m[33m^^[0m [0m[33mUnnecessary alias 'ID' for module member 'sui::object::ID'. This alias is provided by default[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09011][0m[1m: unused constant[0m
+   [0m[34m┌─[0m ./sources/points_token.move:52:11
+   [0m[34m│[0m
+[0m[34m52[0m [0m[34m│[0m     const [0m[33mEBalanceAlreadyExists[0m: u64 = 501;
+   [0m[34m│[0m           [0m[33m^^^^^^^^^^^^^^^^^^^^^[0m [0m[33mThe constant 'EBalanceAlreadyExists' is never used. Consider removing it.[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(unused_const)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09011][0m[1m: unused constant[0m
+   [0m[34m┌─[0m ./sources/points_token.move:55:11
+   [0m[34m│[0m
+[0m[34m55[0m [0m[34m│[0m     const [0m[33mENoBalanceFound[0m: u64 = 502;
+   [0m[34m│[0m           [0m[33m^^^^^^^^^^^^^^^[0m [0m[33mThe constant 'ENoBalanceFound' is never used. Consider removing it.[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(unused_const)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09011][0m[1m: unused constant[0m
+   [0m[34m┌─[0m ./sources/points_token.move:58:11
+   [0m[34m│[0m
+[0m[34m58[0m [0m[34m│[0m     const [0m[33mEBelowMinimumBalance[0m: u64 = 503;
+   [0m[34m│[0m           [0m[33m^^^^^^^^^^^^^^^^^^^^[0m [0m[33mThe constant 'EBelowMinimumBalance' is never used. Consider removing it.[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(unused_const)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09011][0m[1m: unused constant[0m
+   [0m[34m┌─[0m ./sources/points_token.move:61:11
+   [0m[34m│[0m
+[0m[34m61[0m [0m[34m│[0m     const [0m[33mENotOwner[0m: u64 = 504;
+   [0m[34m│[0m           [0m[33m^^^^^^^^^[0m [0m[33mThe constant 'ENotOwner' is never used. Consider removing it.[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(unused_const)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+   [0m[34m┌─[0m ./sources/redemption.move:36:27
+   [0m[34m│[0m
+[0m[34m36[0m [0m[34m│[0m     use sui::tx_context::{[0m[33mSelf[0m, TxContext};
+   [0m[34m│[0m                           [0m[33m^^^^[0m [0m[33mUnnecessary alias 'tx_context' for module 'sui::tx_context'. This alias is provided by default[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+   [0m[34m┌─[0m ./sources/redemption.move:36:33
+   [0m[34m│[0m
+[0m[34m36[0m [0m[34m│[0m     use sui::tx_context::{Self, [0m[33mTxContext[0m};
+   [0m[34m│[0m                                 [0m[33m^^^^^^^^^[0m [0m[33mUnnecessary alias 'TxContext' for module member 'sui::tx_context::TxContext'. This alias is provided by default[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+   [0m[34m┌─[0m ./sources/redemption.move:37:14
+   [0m[34m│[0m
+[0m[34m37[0m [0m[34m│[0m     use sui::[0m[33mtransfer[0m;
+   [0m[34m│[0m              [0m[33m^^^^^^^^[0m [0m[33mUnnecessary alias 'transfer' for module 'sui::transfer'. This alias is provided by default[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09002][0m[1m: unused variable[0m
+    [0m[34m┌─[0m ./sources/redemption.move:259:14
+    [0m[34m│[0m
+[0m[34m259[0m [0m[34m│[0m         let ([0m[33mgross_value[0m, fee, net_value) = calculate_payout(config, treasury, amount);
+    [0m[34m│[0m              [0m[33m^^^^^^^^^^^[0m [0m[33mUnused local variable 'gross_value'. Consider removing or prefixing with an underscore: '_gross_value'[0m
+    [0m[34m│[0m
+    [0m[34m=[0m This warning can be suppressed with '#[allow(unused_variable)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W10007][0m[1m: issue with attribute value[0m
+   [0m[34m┌─[0m ./sources/points_market.move:37:31
+   [0m[34m│[0m
+[0m[34m37[0m [0m[34m│[0m #[allow(duplicate_alias, lint([0m[33mpublic_entry[0m))]
+   [0m[34m│[0m                               [0m[33m^^^^^^^^^^^^[0m [0m[33mUnknown warning filter 'lint(public_entry)'[0m
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+   [0m[34m┌─[0m ./sources/treasury.move:31:23
+   [0m[34m│[0m
+[0m[34m31[0m [0m[34m│[0m     use sui::object::{[0m[33mSelf[0m, UID};
+   [0m[34m│[0m                       [0m[33m^^^^[0m [0m[33mUnnecessary alias 'object' for module 'sui::object'. This alias is provided by default[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+   [0m[34m┌─[0m ./sources/treasury.move:31:29
+   [0m[34m│[0m
+[0m[34m31[0m [0m[34m│[0m     use sui::object::{Self, [0m[33mUID[0m};
+   [0m[34m│[0m                             [0m[33m^^^[0m [0m[33mUnnecessary alias 'UID' for module member 'sui::object::UID'. This alias is provided by default[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+   [0m[34m┌─[0m ./sources/treasury.move:32:27
+   [0m[34m│[0m
+[0m[34m32[0m [0m[34m│[0m     use sui::tx_context::{[0m[33mSelf[0m, TxContext};
+   [0m[34m│[0m                           [0m[33m^^^^[0m [0m[33mUnnecessary alias 'tx_context' for module 'sui::tx_context'. This alias is provided by default[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+   [0m[34m┌─[0m ./sources/treasury.move:32:33
+   [0m[34m│[0m
+[0m[34m32[0m [0m[34m│[0m     use sui::tx_context::{Self, [0m[33mTxContext[0m};
+   [0m[34m│[0m                                 [0m[33m^^^^^^^^^[0m [0m[33mUnnecessary alias 'TxContext' for module member 'sui::tx_context::TxContext'. This alias is provided by default[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W02021][0m[1m: duplicate alias[0m
+   [0m[34m┌─[0m ./sources/treasury.move:33:14
+   [0m[34m│[0m
+[0m[34m33[0m [0m[34m│[0m     use sui::[0m[33mtransfer[0m;
+   [0m[34m│[0m              [0m[33m^^^^^^^^[0m [0m[33mUnnecessary alias 'transfer' for module 'sui::transfer'. This alias is provided by default[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(duplicate_alias)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
+[0m[1m[38;5;11mwarning[W09011][0m[1m: unused constant[0m
+   [0m[34m┌─[0m ./sources/treasury.move:44:11
+   [0m[34m│[0m
+[0m[34m44[0m [0m[34m│[0m     const [0m[33mEUnauthorized[0m: u64 = 600;
+   [0m[34m│[0m           [0m[33m^^^^^^^^^^^^^[0m [0m[33mThe constant 'EUnauthorized' is never used. Consider removing it.[0m
+   [0m[34m│[0m
+   [0m[34m=[0m This warning can be suppressed with '#[allow(unused_const)]' applied to the 'module' or module member ('const', 'fun', or 'struct')
+
