@@ -199,8 +199,10 @@ export function parseMarket(id: string, fields: ChainMarket): ParsedMarket {
 
     // Parse outcome
     let outcome: boolean | null = null;
-    if (fields.outcome && typeof fields.outcome === 'object') {
-        if ('Some' in fields.outcome) {
+    if (fields.outcome !== undefined && fields.outcome !== null) {
+        if (typeof fields.outcome === 'boolean') {
+            outcome = fields.outcome;
+        } else if (typeof fields.outcome === 'object' && 'Some' in fields.outcome) {
             outcome = fields.outcome.Some;
         }
     }

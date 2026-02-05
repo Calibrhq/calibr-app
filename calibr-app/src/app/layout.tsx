@@ -5,7 +5,7 @@ import { Providers } from "./providers";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-inter",
@@ -26,6 +26,10 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Calibr",
     description: "Prediction market for calibrated forecasters",
+  },
+  icons: {
+    icon: "/calibr-icon.png",
+    apple: "/calibr-icon.png",
   },
 };
 

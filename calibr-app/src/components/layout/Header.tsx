@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Menu, X, Trophy, Coins } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggleCompact } from "@/components/ui/theme-toggle";
@@ -39,8 +40,13 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center transition-transform group-hover:scale-105">
-            <span className="text-primary-foreground font-semibold text-sm">C</span>
+          <div className="h-8 w-8 relative transition-transform group-hover:scale-105">
+            <Image
+              src="/calibr-icon.png"
+              alt="Calibr Logo"
+              fill
+              className="object-contain"
+            />
           </div>
           <span className="text-xl font-semibold tracking-tight">Calibr</span>
         </Link>

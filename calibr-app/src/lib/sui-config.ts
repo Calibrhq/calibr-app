@@ -25,6 +25,7 @@ export const CONTRACT_IDS = {
     pointsMarketConfigId: "",
     balanceRegistryId: "",
   },
+
   mainnet: {
     packageId: "",
     adminCapId: "",
