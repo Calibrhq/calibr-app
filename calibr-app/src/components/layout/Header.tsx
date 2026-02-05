@@ -40,9 +40,9 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="h-8 w-8 relative transition-transform group-hover:scale-105">
+          <div className="relative h-8 w-8 transition-transform group-hover:scale-105">
             <Image
-              src="/calibr-icon.png"
+              src="/calibr_logo.png"
               alt="Calibr Logo"
               fill
               className="object-contain"

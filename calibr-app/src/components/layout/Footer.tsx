@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Github, Twitter, MessageCircle, ExternalLink } from "lucide-react";
+import Image from "next/image";
 
 const footerLinks = {
   product: [
@@ -36,17 +37,22 @@ export function Footer() {
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
           {/* Brand */}
           <div className="lg:col-span-2 space-y-4">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-semibold text-sm">C</span>
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <div className="relative h-8 w-8 transition-transform group-hover:scale-105">
+                <Image
+                  src="/calibr_logo.png"
+                  alt="Calibr Logo"
+                  fill
+                  className="object-contain"
+                />
               </div>
               <span className="text-xl font-semibold tracking-tight">Calibr</span>
             </Link>
             <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
-              A prediction market for people who care about being right. 
+              A prediction market for people who care about being right.
               Express your confidence, build your reputation.
             </p>
-            
+
             {/* Social Links */}
             <div className="flex items-center gap-3 pt-2">
               {socialLinks.map((social) => (
@@ -133,7 +139,7 @@ export function Footer() {
           <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} Calibr. All rights reserved.
           </p>
-          
+
           {/* Built on Sui Badge */}
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary/50 text-sm">
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">

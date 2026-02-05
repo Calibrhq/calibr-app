@@ -28,8 +28,7 @@ export const metadata: Metadata = {
     description: "Prediction market for calibrated forecasters",
   },
   icons: {
-    icon: "/calibr-icon.png",
-    apple: "/calibr-icon.png",
+    icon: "/calibr_logo.png",
   },
 };
 
