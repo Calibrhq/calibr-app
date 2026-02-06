@@ -2,6 +2,16 @@
 
 **A DeFi primitive that turns decision quality into an owned, composable on-chain asset.**
 
+## Deployed Contracts (Testnet)
+
+| Contract Name | Object ID | Explorer Link |
+|---------------|-----------|---------------|
+| **Package** | `0x75ac...6667` | [View on SuiScan](https://suiscan.xyz/testnet/package/0x75ac97b98aceeeab79b2c7177266799528b0ecb16a56e8698ffde75d5da26667) |
+| **points_market.move** (Config) | `0x5589...2e22` | [View on SuiScan](https://suiscan.xyz/testnet/object/0x55895949dc612b1f9dac92ab8327e75d5ab95215cedd9e0f9541c69a407c2e22) |
+| **points_market.move** (Registry)| `0xa94d...44f1` | [View on SuiScan](https://suiscan.xyz/testnet/object/0xa94d7ecbcfe896be288353075c89a3764f0f7fc4f338e8e8b07ba8f8536a44f1) |
+| **treasury.move** | `0xc90e...780e` | [View on SuiScan](https://suiscan.xyz/testnet/object/0xc90e7dc8b61899cf6d21bacb6223f7fe563bcc3e051fac06eeee22d3a94f780e) |
+| **market.move** (AdminCap) | `0x1085...df0e` | [View on SuiScan](https://suiscan.xyz/testnet/object/0x108534a9cebf7eff2a968bbac578b9c24bc60fc6637f6c987d6a60397ffcdf0e) |
+
 ---
 
 ## Overview
@@ -126,7 +136,7 @@ Markets are resolved via an automated, verifiable pipeline.
 
 ## Status
 
-*   **Contracts:** Fully implemented in Sui Move (Testnet).
+*   **Contracts:** Fully implemented in Sui Move (Testnet). [View on Explorer](https://suiscan.xyz/testnet/package/0x75ac97b98aceeeab79b2c7177266799528b0ecb16a56e8698ffde75d5da26667)
 *   **Incentives:** Model 1 & 2 logic operational.
 *   **Frontend:** Live prediction interface with real-time feedback.
 *   **Oracle:** Automated "AI Referee" resolving markets.
